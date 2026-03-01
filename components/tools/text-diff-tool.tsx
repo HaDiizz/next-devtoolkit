@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useCopyToClipboard } from '@/hooks/use-copy'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ArrowRightLeft, Copy, Check } from 'lucide-react'
 
 import * as Diff from 'diff'
@@ -21,7 +21,7 @@ export default function TextDiffTool() {
   const [ignoreWhitespace, setIgnoreWhitespace] = useState(false)
 
   const [viewMode, setViewMode] = useState<'split' | 'unified'>('split')
-  const [diffResult, setDiffResult] = useState<any[]>([])
+  const [diffResult, setDiffResult] = useState<Diff.Change[]>([])
 
   const [copied, setCopied] = useState(false)
   const copyToClipboard = useCopyToClipboard()
@@ -47,7 +47,7 @@ export default function TextDiffTool() {
     const patch = Diff.createPatch('file.txt', original, modified, 'original', 'modified', {
       context: 3,
     })
-    copyToClipboard(patch)
+    void copyToClipboard(patch)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -75,7 +75,7 @@ export default function TextDiffTool() {
 
     // We only do word boundaries for small lines or it gets too noisy
     const inline = Diff.diffWords(aStr, bStr)
-    return inline.map((part: any, i: number) => {
+    return inline.map((part: Diff.Change, i: number) => {
       if (removal && part.added) return null // ignore additions in removal line
       if (!removal && part.removed) return null // ignore removals in addition line
 
@@ -97,7 +97,7 @@ export default function TextDiffTool() {
     <div className="space-y-6">
       <div className="border-border bg-card flex flex-col items-center justify-between gap-4 rounded-xl border p-4 sm:flex-row">
         <div className="flex flex-wrap items-center gap-4">
-          <Tabs value={viewMode} onValueChange={(v: any) => setViewMode(v)}>
+          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'split' | 'unified')}>
             <TabsList className="bg-secondary h-9">
               <TabsTrigger value="split" className="text-xs">
                 Split View
@@ -139,7 +139,7 @@ export default function TextDiffTool() {
             variant="outline"
             size="sm"
             onClick={copyPatch}
-            className="ml-2 h-8 gap-1 text-xs"
+            className="text-muted-foreground hover:text-foreground ml-2 h-8 gap-1 text-xs"
           >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             Copy Patch
@@ -224,7 +224,7 @@ export default function TextDiffTool() {
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <tbody>
-                  {diffResult.map((part, i) => {
+                  {diffResult.map((part, _i) => {
                     if (part.added) return null // Added parts don't show on the left panel (usually just empty space, but simplifying here for alignment is tricky without complex diff-match-patch indexing)
 
                     // For a true split view, we need to pad added lines with empty spaces on the left, and removed lines with empty spaces on the right.
@@ -234,7 +234,6 @@ export default function TextDiffTool() {
                   {/* Implemented a simplified aligned rendering below for split view */}
                   {(() => {
                     let leftLine = 1
-                    let rightLine = 1
                     const rows = []
                     for (let i = 0; i < diffResult.length; i++) {
                       const part = diffResult[i]
@@ -314,7 +313,6 @@ export default function TextDiffTool() {
               <table className="w-full border-collapse">
                 <tbody>
                   {(() => {
-                    let leftLine = 1
                     let rightLine = 1
                     const rows = []
                     for (let i = 0; i < diffResult.length; i++) {

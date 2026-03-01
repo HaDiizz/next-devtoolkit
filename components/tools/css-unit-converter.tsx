@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Copy, Check, Settings2 } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 
 type Unit = 'px' | 'rem' | 'em' | 'pt' | 'vw' | 'vh' | '%'
 
@@ -76,7 +77,7 @@ export default function CssUnitConverter() {
   const basePx = convertToPx(val, inputUnit)
 
   const handleCopy = (text: string, index: number) => {
-    copyToClipboard(text)
+    void copyToClipboard(text)
     setCopiedIndex(index)
     setTimeout(() => setCopiedIndex(null), 2000)
   }
@@ -185,17 +186,19 @@ export default function CssUnitConverter() {
                 />
               </div>
               <div className="sm:w-32">
-                <select
-                  className="border-input bg-background focus:border-primary h-14 w-full cursor-pointer rounded-md border-2 px-4 text-sm font-semibold shadow-sm focus:ring-0 focus:outline-none"
-                  value={inputUnit}
-                  onChange={(e) => setInputUnit(e.target.value as Unit)}
-                >
-                  {UNITS.map((u) => (
-                    <option key={u} value={u}>
-                      {u}
-                    </option>
-                  ))}
-                </select>
+                <Select value={inputUnit} onValueChange={(value) => setInputUnit(value as Unit)}>
+                  <SelectTrigger className="border-input bg-background h-14 w-full border-2 text-sm font-semibold shadow-sm focus:ring-0">
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {UNITS.map((u) => (
+                      <SelectItem key={u} value={u}>
+                        {u}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -218,14 +221,14 @@ export default function CssUnitConverter() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0 rounded-full"
+                  className="text-muted-foreground hover:text-foreground h-8 w-8 shrink-0"
                   onClick={() => handleCopy(`${conv.value}${conv.unit}`, i)}
                   title={`Copy ${conv.value}${conv.unit}`}
                 >
                   {copiedIndex === i ? (
                     <Check className="h-4 w-4 text-emerald-500" />
                   ) : (
-                    <Copy className="text-muted-foreground h-4 w-4" />
+                    <Copy className="h-4 w-4" />
                   )}
                 </Button>
               </div>

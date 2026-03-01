@@ -5,6 +5,7 @@ import { ImageIcon, Upload, X, Download, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { ToolLayout } from '@/components/tool-layout'
+import Image from 'next/image'
 
 type OutputFormat = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/bmp'
 
@@ -176,11 +177,13 @@ export default function ImageConverterTool() {
               </Button>
             </div>
             <div className="bg-background/50 flex items-center justify-center rounded-lg p-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={sourcePreview}
                 alt="Source preview"
                 className="max-h-52 max-w-full rounded object-contain"
+                width={512}
+                height={512}
+                priority
               />
             </div>
           </div>
@@ -272,11 +275,13 @@ export default function ImageConverterTool() {
                 </Button>
               </div>
               <div className="bg-background/50 flex items-center justify-center rounded-lg p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={convertedUrl}
                   alt="Converted preview"
                   className="max-h-52 max-w-full rounded object-contain"
+                  width={512}
+                  height={512}
+                  priority
                 />
               </div>
             </div>

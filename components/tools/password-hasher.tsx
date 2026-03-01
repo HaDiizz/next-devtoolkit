@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { useCopyToClipboard } from '@/hooks/use-copy'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -127,7 +127,7 @@ export default function PasswordHasher() {
 
   const copy = useCallback(
     (text: string) => {
-      copyToClipboard(text)
+      void copyToClipboard(text)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     },
@@ -255,6 +255,35 @@ export default function PasswordHasher() {
     argon2Par,
   ])
 
+  const handleVerifyMatch = useCallback(async () => {
+    if (algo === 'bcrypt' && hashOutput) {
+      const isValid = bcrypt.compareSync(password, hashOutput)
+      setVerifyResult(`Verification: ${isValid ? 'MATCH (Valid)' : 'NO MATCH (Invalid)'}`)
+    } else if (algo === 'argon2' && hashOutput) {
+      try {
+        const verifyHash = await argon2id({
+          password: password,
+          salt: salt,
+          iterations: argon2Time,
+          memorySize: argon2Mem,
+          parallelism: argon2Par,
+          hashLength: 32,
+          outputType: 'encoded',
+        })
+
+        if (verifyHash === hashOutput) {
+          setVerifyResult('Verification: MATCH (Valid)')
+        } else {
+          setVerifyResult('Verification: NO MATCH (Invalid)')
+        }
+      } catch (e) {
+        setVerifyResult(`Verification Error: ${e instanceof Error ? e.message : 'Failed'}`)
+      }
+    } else {
+      setVerifyResult('Verification via browser only available for bcrypt & argon2id here.')
+    }
+  }, [algo, hashOutput, password, salt, argon2Time, argon2Mem, argon2Par])
+
   const crackTime = estimateCrackTime(algo, currentParams())
   const weakWarning = isWeak(algo, currentParams())
 
@@ -317,6 +346,7 @@ export default function PasswordHasher() {
                 size="sm"
                 onClick={regenerateSalt}
                 disabled={algo === 'bcrypt'}
+                className="text-muted-foreground hover:text-foreground"
               >
                 <RefreshCw className="mr-1 h-3 w-3" />
                 New
@@ -515,7 +545,13 @@ export default function PasswordHasher() {
       </div>
 
       {/* Hash Button */}
-      <Button onClick={handleHash} className="w-full" disabled={!password || hashing}>
+      <Button
+        onClick={() => {
+          void handleHash()
+        }}
+        className="w-full"
+        disabled={!password || hashing}
+      >
         {hashing ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -542,7 +578,7 @@ export default function PasswordHasher() {
               variant="ghost"
               size="sm"
               onClick={() => copy(hashOutput)}
-              className="h-7 gap-1 text-xs"
+              className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
             >
               {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               {copied ? 'Copied' : 'Copy'}
@@ -574,40 +610,9 @@ export default function PasswordHasher() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 w-full text-xs"
-              onClick={async () => {
-                if (algo === 'bcrypt' && hashOutput) {
-                  const isValid = bcrypt.compareSync(password, hashOutput)
-                  setVerifyResult(
-                    `Verification: ${isValid ? 'MATCH (Valid)' : 'NO MATCH (Invalid)'}`,
-                  )
-                } else if (algo === 'argon2' && hashOutput) {
-                  try {
-                    const verifyHash = await argon2id({
-                      password: password,
-                      salt: salt,
-                      iterations: argon2Time,
-                      memorySize: argon2Mem,
-                      parallelism: argon2Par,
-                      hashLength: 32,
-                      outputType: 'encoded',
-                    })
-
-                    if (verifyHash === hashOutput) {
-                      setVerifyResult('Verification: MATCH (Valid)')
-                    } else {
-                      setVerifyResult('Verification: NO MATCH (Invalid)')
-                    }
-                  } catch (e) {
-                    setVerifyResult(
-                      `Verification Error: ${e instanceof Error ? e.message : 'Failed'}`,
-                    )
-                  }
-                } else {
-                  setVerifyResult(
-                    'Verification via browser only available for bcrypt & argon2id here.',
-                  )
-                }
+              className="text-muted-foreground hover:text-foreground h-8 w-full text-xs"
+              onClick={() => {
+                void handleVerifyMatch()
               }}
             >
               Verify Match

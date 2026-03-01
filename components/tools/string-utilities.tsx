@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Shuffle, ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Shuffle } from 'lucide-react'
 import { Label } from '@/components/ui/label'
-import { ToolLayout, OutputBox, OutputArea } from '@/components/tool-layout'
+import { ToolLayout, OutputBox } from '@/components/tool-layout'
 
 type CaseType = 'upper' | 'lower' | 'title' | 'camel' | 'snake' | 'kebab' | 'pascal' | 'constant'
 

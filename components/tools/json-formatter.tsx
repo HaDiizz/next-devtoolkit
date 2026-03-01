@@ -53,7 +53,7 @@ export default function JsonFormatterTool() {
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Input */}
         <div>
-          <p className="text-muted-foreground mb-1.5 text-xs font-medium">Input JSON</p>
+          <p className="text-muted-foreground min-h-[30px] text-xs font-medium">Input JSON</p>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -77,7 +77,7 @@ export default function JsonFormatterTool() {
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="border-border bg-secondary/50 flex items-center gap-2 rounded-lg border px-3 py-2">
+        <div className="border-border bg-secondary/50 flex min-h-[30px] items-center gap-2 rounded-lg border px-3">
           <span className="text-muted-foreground text-xs">Indent:</span>
           {[2, 4].map((n) => (
             <button

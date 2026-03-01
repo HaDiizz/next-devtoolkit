@@ -92,7 +92,7 @@ export default function JsonToTypescriptTool() {
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="flex flex-col gap-3">
           <div>
-            <p className="text-muted-foreground mb-1.5 text-xs font-medium">Input JSON</p>
+            <p className="text-muted-foreground min-h-[30px] text-xs font-medium">Input JSON</p>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}

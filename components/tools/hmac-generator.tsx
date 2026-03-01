@@ -63,25 +63,24 @@ export default function HmacGenerator() {
         setBase64Digest('')
       }
     }
-    generateHmac()
+    void generateHmac()
   }, [message, secret, algo])
 
   const copyHex = useCallback(() => {
     if (!hexDigest) return
-    copyToClipboard(hexDigest)
+    void copyToClipboard(hexDigest)
     setCopiedHex(true)
     setTimeout(() => setCopiedHex(false), 2000)
   }, [hexDigest, copyToClipboard])
 
   const copyB64 = useCallback(() => {
     if (!base64Digest) return
-    copyToClipboard(base64Digest)
+    void copyToClipboard(base64Digest)
     setCopiedB64(true)
     setTimeout(() => setCopiedB64(false), 2000)
   }, [base64Digest, copyToClipboard])
 
   const isVerified = verifySig !== '' && (verifySig === hexDigest || verifySig === base64Digest)
-  const isFailed = verifySig !== '' && verifySig !== hexDigest && verifySig !== base64Digest
 
   return (
     <div className="space-y-6">
@@ -139,7 +138,7 @@ export default function HmacGenerator() {
                   size="sm"
                   onClick={copyHex}
                   disabled={!hexDigest}
-                  className="h-7 gap-1 text-xs"
+                  className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
                 >
                   {copiedHex ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                   Copy
@@ -162,7 +161,7 @@ export default function HmacGenerator() {
                   size="sm"
                   onClick={copyB64}
                   disabled={!base64Digest}
-                  className="h-7 gap-1 text-xs"
+                  className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
                 >
                   {copiedB64 ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                   Copy

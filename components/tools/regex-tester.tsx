@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react'
 import { Search } from 'lucide-react'
-import { Input } from '@/components/ui/input'
 import { ToolLayout } from '@/components/tool-layout'
 
 interface MatchInfo {

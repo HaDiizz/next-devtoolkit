@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { ToolLayout, OutputArea } from '@/components/tool-layout'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCopyToClipboard } from '@/hooks/use-copy'
+import Image from 'next/image'
 
 export default function Base64ConverterTool() {
   const [encodeInput, setEncodeInput] = useState('')
@@ -212,12 +213,15 @@ export default function Base64ConverterTool() {
                   </Button>
                 </div>
                 <div className="border-border bg-secondary/30 flex items-center justify-center rounded-lg border p-6">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={decodeImagePreview}
-                    alt="Decoded base64 image"
-                    className="max-h-80 max-w-full rounded object-contain"
-                  />
+                  <div className="relative h-80 w-full max-w-lg">
+                    <Image
+                      src={decodeImagePreview}
+                      alt="Decoded base64 image"
+                      fill
+                      className="rounded object-contain"
+                      priority
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -273,12 +277,15 @@ export default function Base64ConverterTool() {
                 </div>
 
                 <div className="border-border bg-secondary/30 flex items-center justify-center rounded-lg border p-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={imagePreview}
-                    alt="Uploaded preview"
-                    className="max-h-60 max-w-full rounded object-contain"
-                  />
+                  <div className="relative h-60 w-full max-w-lg">
+                    <Image
+                      src={imagePreview}
+                      alt="Uploaded preview"
+                      fill
+                      className="rounded object-contain"
+                      priority
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -288,7 +295,9 @@ export default function Base64ConverterTool() {
                       variant="ghost"
                       size="sm"
                       className="text-muted-foreground hover:text-foreground h-7 gap-1.5 text-xs"
-                      onClick={() => copy(imageBase64)}
+                      onClick={() => {
+                        void copy(imageBase64)
+                      }}
                     >
                       Copy
                     </Button>

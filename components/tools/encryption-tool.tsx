@@ -235,7 +235,9 @@ export default function EncryptionTool() {
               />
             </div>
             <Button
-              onClick={encrypt}
+              onClick={() => {
+                void encrypt()
+              }}
               disabled={loading}
               className="bg-primary text-primary-foreground hover:bg-primary/90 w-fit gap-1.5"
             >
@@ -261,7 +263,9 @@ export default function EncryptionTool() {
               />
             </div>
             <Button
-              onClick={decrypt}
+              onClick={() => {
+                void decrypt()
+              }}
               disabled={loading}
               className="bg-primary text-primary-foreground hover:bg-primary/90 w-fit gap-1.5"
             >

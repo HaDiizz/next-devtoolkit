@@ -55,7 +55,9 @@ export function OutputBox({
           variant="ghost"
           size="icon"
           className="text-muted-foreground hover:text-foreground h-8 w-8 shrink-0"
-          onClick={() => copy(value)}
+          onClick={() => {
+            void copy(value)
+          }}
           disabled={!value}
         >
           <Copy className="h-4 w-4" />
@@ -84,7 +86,9 @@ export function OutputArea({
           variant="ghost"
           size="sm"
           className="text-muted-foreground hover:text-foreground h-7 gap-1.5 text-xs"
-          onClick={() => copy(value)}
+          onClick={() => {
+            void copy(value)
+          }}
           disabled={!value}
         >
           <Copy className="h-3.5 w-3.5" />

@@ -108,7 +108,7 @@ END:VCARD`
   }, [getContent, fgColor, bgColor, errorCorrection, margin])
 
   useEffect(() => {
-    renderQR()
+    void renderQR()
   }, [renderQR])
 
   const downloadPNG = () => {
@@ -396,10 +396,20 @@ END:VCARD`
           </div>
 
           <div className="grid grid-cols-2 gap-2 pt-2">
-            <Button onClick={downloadPNG} variant="outline" className="h-9 w-full gap-1.5 text-xs">
+            <Button
+              onClick={downloadPNG}
+              variant="outline"
+              className="text-muted-foreground hover:text-foreground h-9 w-full gap-1.5 text-xs"
+            >
               <Download className="h-3.5 w-3.5" /> PNG
             </Button>
-            <Button onClick={downloadSVG} variant="outline" className="h-9 w-full gap-1.5 text-xs">
+            <Button
+              onClick={() => {
+                void downloadSVG()
+              }}
+              variant="outline"
+              className="text-muted-foreground hover:text-foreground h-9 w-full gap-1.5 text-xs"
+            >
               <Download className="h-3.5 w-3.5" /> SVG
             </Button>
           </div>

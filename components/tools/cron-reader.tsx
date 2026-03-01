@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Clock, Info } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { ToolLayout, OutputBox } from '@/components/tool-layout'
+import { ToolLayout } from '@/components/tool-layout'
 
 const MONTH_NAMES = [
   'January',

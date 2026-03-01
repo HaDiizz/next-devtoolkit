@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { useCopyToClipboard } from '@/hooks/use-copy'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,13 @@ import { Copy, Check, ShieldAlert, ShieldCheck, KeyRound, Play } from 'lucide-re
 
 import * as jose from 'jose'
 
+interface VerifyResult {
+  valid: boolean
+  payload?: jose.JWTPayload
+  header?: jose.JWTHeaderParameters
+  error?: string
+}
+
 export default function JwtBuilder() {
   const [algo, setAlgo] = useState('HS256')
   const [typ, setTyp] = useState('JWT')
@@ -30,7 +37,7 @@ export default function JwtBuilder() {
 
   const [verifyJwt, setVerifyJwt] = useState('')
   const [verifySecret, setVerifySecret] = useState('')
-  const [verifyResult, setVerifyResult] = useState<any>(null)
+  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null)
 
   const [copied, setCopied] = useState(false)
   const copyToClipboard = useCopyToClipboard()
@@ -52,8 +59,8 @@ export default function JwtBuilder() {
         .sign(secretKey)
 
       setGeneratedJwt(jwt)
-    } catch (err: any) {
-      setErrorMSG(err.message || 'Failed to generate JWT')
+    } catch (err: unknown) {
+      setErrorMSG(err instanceof Error ? err.message : 'Failed to generate JWT')
       setGeneratedJwt('')
     }
   }
@@ -72,14 +79,14 @@ export default function JwtBuilder() {
 
       const { payload, protectedHeader } = await jose.jwtVerify(verifyJwt, secretKey)
       setVerifyResult({ valid: true, payload, header: protectedHeader })
-    } catch (err: any) {
-      setVerifyResult({ valid: false, error: err.message })
+    } catch (err: unknown) {
+      setVerifyResult({ valid: false, error: err instanceof Error ? err.message : 'Invalid token' })
     }
   }
 
   const copyOut = () => {
     if (!generatedJwt) return
-    copyToClipboard(generatedJwt)
+    void copyToClipboard(generatedJwt)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -156,7 +163,12 @@ export default function JwtBuilder() {
                     Keep this secure. Used to sign the HMAC segment.
                   </p>
                 </div>
-                <Button onClick={handleGenerate} className="h-10 w-full gap-2 text-xs">
+                <Button
+                  onClick={() => {
+                    void handleGenerate()
+                  }}
+                  className="h-10 w-full gap-2 text-xs"
+                >
                   <Play className="h-4 w-4" /> Sign & Generate JWT
                 </Button>
                 {errorMSG && <p className="text-destructive text-xs">{errorMSG}</p>}
@@ -174,7 +186,7 @@ export default function JwtBuilder() {
                     size="sm"
                     onClick={copyOut}
                     disabled={!generatedJwt}
-                    className="h-7 gap-1 text-xs"
+                    className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
                   >
                     {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     Copy
@@ -224,7 +236,9 @@ export default function JwtBuilder() {
                 />
               </div>
               <Button
-                onClick={handleVerify}
+                onClick={() => {
+                  void handleVerify()
+                }}
                 disabled={!verifyJwt || !verifySecret}
                 className="h-10 w-full gap-2"
               >

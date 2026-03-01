@@ -1,13 +1,20 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useCopyToClipboard } from '@/hooks/use-copy'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Slider } from '@/components/ui/slider'
-import { Copy, Plus, X, Shuffle, Download, Image as ImageIcon, Check } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Copy, Plus, X, Shuffle, Image as ImageIcon, Check } from 'lucide-react'
 
 interface ColorStop {
   id: string
@@ -116,7 +123,7 @@ export default function CssGradientGenerator() {
   )
 
   const copyOut = () => {
-    copyToClipboard(`background: ${cssValue};\nbackground: ${webkitCssValue};`)
+    void copyToClipboard(`background: ${cssValue};\nbackground: ${webkitCssValue};`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -180,13 +187,13 @@ export default function CssGradientGenerator() {
                 variant="outline"
                 size="sm"
                 onClick={randomize}
-                className="h-8 gap-1.5 text-xs leading-none"
+                className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-xs leading-none"
               >
                 <Shuffle className="h-3 w-3" /> Randomize
               </Button>
             </div>
 
-            <Tabs value={mode} onValueChange={(v: any) => setMode(v)}>
+            <Tabs value={mode} onValueChange={(v) => setMode(v as 'linear' | 'radial' | 'conic')}>
               <TabsList className="bg-secondary grid w-full grid-cols-3">
                 <TabsTrigger value="linear" className="text-xs">
                   Linear
@@ -220,30 +227,30 @@ export default function CssGradientGenerator() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground text-xs font-medium">Shape</Label>
-                  <select
-                    title="Radial Shape"
-                    value={radialShape}
-                    onChange={(e) => setRadialShape(e.target.value)}
-                    className="border-input bg-secondary ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-9 w-full items-center justify-between rounded-md border px-3 py-2 text-xs shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="circle">Circle</option>
-                    <option value="ellipse">Ellipse</option>
-                  </select>
+                  <Select value={radialShape} onValueChange={setRadialShape}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Select shape" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="circle">Circle</SelectItem>
+                      <SelectItem value="ellipse">Ellipse</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-muted-foreground text-xs font-medium">Position</Label>
-                  <select
-                    title="Radial Position"
-                    value={radialPosition}
-                    onChange={(e) => setRadialPosition(e.target.value)}
-                    className="border-input bg-secondary ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-9 w-full items-center justify-between rounded-md border px-3 py-2 text-xs shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="center">Center</option>
-                    <option value="top left">Top Left</option>
-                    <option value="top right">Top Right</option>
-                    <option value="bottom left">Bottom Left</option>
-                    <option value="bottom right">Bottom Right</option>
-                  </select>
+                  <Select value={radialPosition} onValueChange={setRadialPosition}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Select position" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="center">Center</SelectItem>
+                      <SelectItem value="top left">Top Left</SelectItem>
+                      <SelectItem value="top right">Top Right</SelectItem>
+                      <SelectItem value="bottom left">Bottom Left</SelectItem>
+                      <SelectItem value="bottom right">Bottom Right</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}
@@ -265,18 +272,18 @@ export default function CssGradientGenerator() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-muted-foreground text-xs font-medium">Position</Label>
-                  <select
-                    title="Conic Position"
-                    value={conicPosition}
-                    onChange={(e) => setConicPosition(e.target.value)}
-                    className="border-input bg-secondary ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-9 w-full items-center justify-between rounded-md border px-3 py-2 text-xs shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="center">Center</option>
-                    <option value="top left">Top Left</option>
-                    <option value="top right">Top Right</option>
-                    <option value="bottom left">Bottom Left</option>
-                    <option value="bottom right">Bottom Right</option>
-                  </select>
+                  <Select value={conicPosition} onValueChange={setConicPosition}>
+                    <SelectTrigger className="text-xs">
+                      <SelectValue placeholder="Select position" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="center">Center</SelectItem>
+                      <SelectItem value="top left">Top Left</SelectItem>
+                      <SelectItem value="top right">Top Right</SelectItem>
+                      <SelectItem value="bottom left">Bottom Left</SelectItem>
+                      <SelectItem value="bottom right">Bottom Right</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}
@@ -290,14 +297,14 @@ export default function CssGradientGenerator() {
                 size="sm"
                 onClick={addStop}
                 disabled={stops.length >= 8}
-                className="h-7 gap-1 text-xs"
+                className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
               >
                 <Plus className="h-3 w-3" /> Add
               </Button>
             </div>
 
             <div className="space-y-3">
-              {stops.map((stop, index) => (
+              {stops.map((stop) => (
                 <div
                   key={stop.id}
                   className="border-border bg-secondary/30 group relative flex items-center gap-3 rounded-lg border p-3"
@@ -369,7 +376,12 @@ export default function CssGradientGenerator() {
           <div className="border-border bg-card space-y-4 rounded-xl border p-5">
             <div className="border-border flex items-center justify-between border-b pb-2">
               <Label className="text-foreground text-sm font-semibold">CSS Output</Label>
-              <Button variant="ghost" size="sm" onClick={copyOut} className="h-7 gap-1 text-xs">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={copyOut}
+                className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
+              >
                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 Copy
               </Button>
@@ -380,7 +392,11 @@ export default function CssGradientGenerator() {
             </pre>
           </div>
 
-          <Button variant="outline" className="w-full gap-2" onClick={exportPng}>
+          <Button
+            variant="outline"
+            className="text-muted-foreground hover:text-foreground w-full gap-2"
+            onClick={exportPng}
+          >
             <ImageIcon className="h-4 w-4" /> Export as PNG (1920x1080)
           </Button>
         </div>

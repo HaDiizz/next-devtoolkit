@@ -52,7 +52,9 @@ export default function HashGeneratorTool() {
         />
       </div>
       <Button
-        onClick={generate}
+        onClick={() => {
+          void generate()
+        }}
         disabled={!input}
         className="bg-primary text-primary-foreground hover:bg-primary/90 w-fit"
       >
