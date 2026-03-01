@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     title: 'DevToolkit | Professional Developer Utilities & SDK Tools',
     description:
       'Comprehensive set of developer utilities for modern software engineers. Offline-capable, secure, and fast.',
-    url: 'https://devtoolkit-plus.vercel.app',
+    url: 'https://next-devtoolkit.vercel.app',
     siteName: 'DevToolkit',
     images: [
       {

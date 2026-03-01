@@ -21,7 +21,7 @@ import QRCode from 'qrcode'
 export default function QrCodeGenerator() {
   const [mode, setMode] = useState('url')
 
-  const [url, setUrl] = useState('https://devtoolkit.vercel.app')
+  const [url, setUrl] = useState('https://next-devtoolkit.vercel.app')
 
   const [wifiSsid, setWifiSsid] = useState('')
   const [wifiPassword, setWifiPassword] = useState('')
