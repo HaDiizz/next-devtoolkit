@@ -1,0 +1,116 @@
+'use client'
+
+import * as React from 'react'
+import { ChevronRight, Terminal, Search } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+
+import { tools, categories } from '@/lib/tools'
+import { Label } from '@/components/ui/label'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarGroupContent,
+  SidebarInput,
+} from '@/components/ui/sidebar'
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname()
+  const [searchQuery, setSearchQuery] = React.useState('')
+
+  const filteredTools = React.useMemo(() => {
+    if (!searchQuery.trim()) return tools
+    const lower = searchQuery.toLowerCase()
+    return tools.filter(
+      (t) => t.name.toLowerCase().includes(lower) || t.description.toLowerCase().includes(lower),
+    )
+  }, [searchQuery])
+
+  return (
+    <Sidebar {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="/">
+                <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <Terminal className="size-4" />
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-semibold tracking-tight">DevToolkit</span>
+                  <span className="text-muted-foreground text-xs">Utilities</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <form onSubmit={(e: React.FormEvent) => e.preventDefault()}>
+          <SidebarGroup className="py-0">
+            <SidebarGroupContent className="relative">
+              <Label htmlFor="search" className="sr-only">
+                Search
+              </Label>
+              <SidebarInput
+                id="search"
+                placeholder="Search tools..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <Search className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 opacity-50 select-none" />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </form>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarMenu>
+            {categories.map((category) => {
+              const categoryTools = filteredTools.filter((t) => t.category === category)
+              if (categoryTools.length === 0) return null
+
+              return (
+                <Collapsible key={category} defaultOpen className="group/collapsible">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton>
+                        <span className="font-medium">{category}</span>
+                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {categoryTools.map((tool) => {
+                          const isActive = pathname === `/tools/${tool.id}`
+                          return (
+                            <SidebarMenuSubItem key={tool.id}>
+                              <SidebarMenuSubButton asChild isActive={isActive}>
+                                <Link href={`/tools/${tool.id}`}>
+                                  <tool.icon className="mr-2 h-4 w-4 shrink-0" />
+                                  <span>{tool.name}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          )
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )
+            })}
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  )
+}
