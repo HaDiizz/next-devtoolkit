@@ -34,6 +34,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   'string-utilities': dynamic(() => import('@/components/tools/string-utilities')),
   'regex-tester': dynamic(() => import('@/components/tools/regex-tester')),
   'text-diff-tool': dynamic(() => import('@/components/tools/text-diff-tool')),
+  'markdown-preview': dynamic(() => import('@/components/tools/markdown-preview')),
   // Date / Time
   'cron-reader': dynamic(() => import('@/components/tools/cron-reader')),
   // Data

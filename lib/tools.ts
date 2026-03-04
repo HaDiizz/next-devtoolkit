@@ -246,6 +246,13 @@ export const tools: Tool[] = [
     icon: Diff,
     category: 'String & Regex',
   },
+  {
+    id: 'markdown-preview',
+    name: 'Markdown Preview',
+    description: 'Real-time Markdown editor with live preview and GitHub Flavored Markdown support',
+    icon: FileCode,
+    category: 'String & Regex',
+  },
 
   // --- Date / Time ---
   {
