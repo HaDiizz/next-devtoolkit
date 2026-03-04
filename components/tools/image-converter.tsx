@@ -170,7 +170,7 @@ export default function ImageConverterTool() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground hover:text-foreground h-8 w-8"
+                className="text-muted-foreground dark:hover:text-foreground h-8 w-8 hover:text-white"
                 onClick={clear}
               >
                 <X className="h-4 w-4" />
@@ -202,7 +202,7 @@ export default function ImageConverterTool() {
                   className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors ${
                     outputFormat === fmt.value
                       ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-secondary/50 text-muted-foreground hover:text-foreground'
+                      : 'border-border bg-secondary/50 text-muted-foreground dark:hover:text-foreground hover:text-white'
                   }`}
                 >
                   {fmt.label}

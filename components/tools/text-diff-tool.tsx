@@ -139,7 +139,7 @@ export default function TextDiffTool() {
             variant="outline"
             size="sm"
             onClick={copyPatch}
-            className="text-muted-foreground hover:text-foreground ml-2 h-8 gap-1 text-xs"
+            className="text-muted-foreground dark:hover:text-foreground ml-2 h-8 gap-1 text-xs hover:text-white"
           >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             Copy Patch

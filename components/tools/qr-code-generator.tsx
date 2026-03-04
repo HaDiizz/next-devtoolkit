@@ -399,7 +399,7 @@ END:VCARD`
             <Button
               onClick={downloadPNG}
               variant="outline"
-              className="text-muted-foreground hover:text-foreground h-9 w-full gap-1.5 text-xs"
+              className="text-muted-foreground dark:hover:text-foreground h-9 w-full gap-1.5 text-xs hover:text-white"
             >
               <Download className="h-3.5 w-3.5" /> PNG
             </Button>
@@ -408,7 +408,7 @@ END:VCARD`
                 void downloadSVG()
               }}
               variant="outline"
-              className="text-muted-foreground hover:text-foreground h-9 w-full gap-1.5 text-xs"
+              className="text-muted-foreground dark:hover:text-foreground h-9 w-full gap-1.5 text-xs hover:text-white"
             >
               <Download className="h-3.5 w-3.5" /> SVG
             </Button>

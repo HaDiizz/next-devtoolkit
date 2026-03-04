@@ -140,7 +140,7 @@ export default function RegexTesterTool() {
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               flags[key]
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-muted-foreground hover:text-foreground'
+                : 'bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-white'
             }`}
           >
             <span className="font-mono font-bold">{short}</span>

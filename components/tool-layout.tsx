@@ -54,7 +54,7 @@ export function OutputBox({
         <Button
           variant="ghost"
           size="icon"
-          className="text-muted-foreground hover:text-foreground h-8 w-8 shrink-0"
+          className="text-muted-foreground dark:hover:text-foreground h-8 w-8 shrink-0 hover:text-white"
           onClick={() => {
             void copy(value)
           }}
@@ -85,7 +85,7 @@ export function OutputArea({
         <Button
           variant="ghost"
           size="sm"
-          className="text-muted-foreground hover:text-foreground h-7 gap-1.5 text-xs"
+          className="text-muted-foreground dark:hover:text-foreground h-7 gap-1.5 text-xs hover:text-white"
           onClick={() => {
             void copy(value)
           }}

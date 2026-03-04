@@ -186,7 +186,7 @@ export default function JwtBuilder() {
                     size="sm"
                     onClick={copyOut}
                     disabled={!generatedJwt}
-                    className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
+                    className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
                   >
                     {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     Copy

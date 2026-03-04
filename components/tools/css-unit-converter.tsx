@@ -221,7 +221,7 @@ export default function CssUnitConverter() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-foreground h-8 w-8 shrink-0"
+                  className="text-muted-foreground dark:hover:text-foreground h-8 w-8 shrink-0 hover:text-white"
                   onClick={() => handleCopy(`${conv.value}${conv.unit}`, i)}
                   title={`Copy ${conv.value}${conv.unit}`}
                 >

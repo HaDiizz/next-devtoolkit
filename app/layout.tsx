@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Toaster } from '@/components/ui/sonner'
+import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 import Script from 'next/script'
 
@@ -11,12 +12,16 @@ const _geistMono = Geist_Mono({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: {
-    default: 'DevToolkit | Professional Developer Utilities & SDK Tools',
+    default: 'DevToolkit',
     template: '%s | DevToolkit',
   },
   description:
     'A comprehensive set of developer utilities: UUID/CUID generators, timestamp converter, password generator, JSON formatter, mock data, Thai CID generator, and more. เครื่องมือพัฒนาซอฟต์แวร์ ตัวแปลงรหัส เครื่องมือ JSON โปรแกรมสร้างรหัสผ่าน ตัวแปลงเวลา เครื่องมือโปรแกรมเมอร์ ภาษาไทย จัดการข้อมูล สร้าง Mock Data.',
   keywords: [
+    'devtool',
+    'devtoolkit',
+    'next-devtool',
+    'next-devtoolkit',
     'developer tools',
     'json formatter',
     'jwt decoder',
@@ -28,6 +33,10 @@ export const metadata: Metadata = {
     'programmer tools',
     'thai cid generator',
     'unit converter',
+    'base64 converter',
+    'random data generator',
+    'timestamp converter',
+    'image converter',
     'เครื่องมือพัฒนาซอฟต์แวร์',
     'ตัวแปลงรหัส',
     'เครื่องมือ JSON',
@@ -39,9 +48,9 @@ export const metadata: Metadata = {
     'สร้าง Mock Data',
     'โปรแกรมเมอร์ไทย',
   ],
-  authors: [{ name: 'DevToolkit Team' }],
-  creator: 'DevToolkit',
-  publisher: 'DevToolkit',
+  authors: [{ name: 'DevMe Team' }],
+  creator: 'nattapol-sh',
+  publisher: 'DevMe',
   formatDetection: {
     email: false,
     address: false,
@@ -107,6 +116,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#1a1a2e',
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -115,15 +127,22 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${_geistMono.className} ${_geist.className} font-sans antialiased`}
         suppressHydrationWarning
       >
-        {children}
-        <Toaster />
-        <Analytics />
-        <SpeedInsights />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+          <Analytics />
+          <SpeedInsights />
+        </ThemeProvider>
         <Script id="register-sw" strategy="afterInteractive">
           {`
             if ('serviceWorker' in navigator) {

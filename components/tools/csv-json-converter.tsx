@@ -180,7 +180,7 @@ export default function CsvJsonConverter() {
             variant="ghost"
             size="icon"
             onClick={toggleMode}
-            className="hover:bg-secondary text-muted-foreground hover:text-foreground h-8 w-8 rounded-full"
+            className="hover:bg-secondary text-muted-foreground dark:hover:text-foreground h-8 w-8 rounded-full hover:text-white"
           >
             <ArrowRightLeft className="h-4 w-4" />
           </Button>
@@ -268,7 +268,7 @@ export default function CsvJsonConverter() {
                 size="sm"
                 onClick={handleCopy}
                 disabled={!outputVal}
-                className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
+                className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
               >
                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 Copy

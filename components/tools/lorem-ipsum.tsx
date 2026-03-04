@@ -145,7 +145,7 @@ export default function LoremIpsumTool() {
               <button
                 key={t}
                 onClick={() => setType(t)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-colors ${type === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-colors ${type === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-white'}`}
               >
                 {t}
               </button>

@@ -346,7 +346,7 @@ export default function PasswordHasher() {
                 size="sm"
                 onClick={regenerateSalt}
                 disabled={algo === 'bcrypt'}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground dark:hover:text-foreground hover:text-white"
               >
                 <RefreshCw className="mr-1 h-3 w-3" />
                 New
@@ -578,7 +578,7 @@ export default function PasswordHasher() {
               variant="ghost"
               size="sm"
               onClick={() => copy(hashOutput)}
-              className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
+              className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
             >
               {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               {copied ? 'Copied' : 'Copy'}
@@ -610,7 +610,7 @@ export default function PasswordHasher() {
             <Button
               variant="outline"
               size="sm"
-              className="text-muted-foreground hover:text-foreground h-8 w-full text-xs"
+              className="text-muted-foreground dark:hover:text-foreground h-8 w-full text-xs hover:text-white"
               onClick={() => {
                 void handleVerifyMatch()
               }}

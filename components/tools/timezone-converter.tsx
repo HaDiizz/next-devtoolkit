@@ -228,7 +228,7 @@ export default function TimezoneConverterTool() {
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                 toTzList.includes(tz.value)
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-muted-foreground hover:text-foreground'
+                  : 'bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-white'
               }`}
             >
               {tz.label}

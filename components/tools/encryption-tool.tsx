@@ -161,7 +161,7 @@ export default function EncryptionTool() {
             <button
               type="button"
               onClick={() => setShowSecret(!showSecret)}
-              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
+              className="text-muted-foreground dark:hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 hover:text-white"
             >
               {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -170,7 +170,7 @@ export default function EncryptionTool() {
             variant="outline"
             size="sm"
             onClick={generateSecret}
-            className="border-border text-muted-foreground hover:text-foreground gap-1.5"
+            className="border-border text-muted-foreground dark:hover:text-foreground gap-1.5 hover:text-white"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             Generate
@@ -189,7 +189,7 @@ export default function EncryptionTool() {
               className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors ${
                 algorithm === algo
                   ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-secondary/50 text-muted-foreground hover:text-foreground'
+                  : 'border-border bg-secondary/50 text-muted-foreground dark:hover:text-foreground hover:text-white'
               }`}
             >
               {algo}

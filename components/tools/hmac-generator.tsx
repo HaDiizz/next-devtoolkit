@@ -138,7 +138,7 @@ export default function HmacGenerator() {
                   size="sm"
                   onClick={copyHex}
                   disabled={!hexDigest}
-                  className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
+                  className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
                 >
                   {copiedHex ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                   Copy
@@ -161,7 +161,7 @@ export default function HmacGenerator() {
                   size="sm"
                   onClick={copyB64}
                   disabled={!base64Digest}
-                  className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
+                  className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
                 >
                   {copiedB64 ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                   Copy

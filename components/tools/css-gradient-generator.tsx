@@ -187,7 +187,7 @@ export default function CssGradientGenerator() {
                 variant="outline"
                 size="sm"
                 onClick={randomize}
-                className="text-muted-foreground hover:text-foreground h-8 gap-1.5 text-xs leading-none"
+                className="text-muted-foreground dark:hover:text-foreground h-8 gap-1.5 text-xs leading-none hover:text-white"
               >
                 <Shuffle className="h-3 w-3" /> Randomize
               </Button>
@@ -297,7 +297,7 @@ export default function CssGradientGenerator() {
                 size="sm"
                 onClick={addStop}
                 disabled={stops.length >= 8}
-                className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
+                className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
               >
                 <Plus className="h-3 w-3" /> Add
               </Button>
@@ -380,7 +380,7 @@ export default function CssGradientGenerator() {
                 variant="ghost"
                 size="sm"
                 onClick={copyOut}
-                className="text-muted-foreground hover:text-foreground h-7 gap-1 text-xs"
+                className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
               >
                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 Copy
@@ -394,7 +394,7 @@ export default function CssGradientGenerator() {
 
           <Button
             variant="outline"
-            className="text-muted-foreground hover:text-foreground w-full gap-2"
+            className="text-muted-foreground dark:hover:text-foreground w-full gap-2 hover:text-white"
             onClick={exportPng}
           >
             <ImageIcon className="h-4 w-4" /> Export as PNG (1920x1080)

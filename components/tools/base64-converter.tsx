@@ -205,7 +205,7 @@ export default function Base64ConverterTool() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-muted-foreground hover:text-foreground h-7 gap-1.5 text-xs"
+                    className="text-muted-foreground dark:hover:text-foreground h-7 gap-1.5 text-xs hover:text-white"
                     onClick={downloadImage}
                   >
                     <Download className="h-3.5 w-3.5" />
@@ -269,7 +269,7 @@ export default function Base64ConverterTool() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-muted-foreground hover:text-foreground h-8 w-8"
+                    className="text-muted-foreground dark:hover:text-foreground h-8 w-8 hover:text-white"
                     onClick={clearImage}
                   >
                     <X className="h-4 w-4" />
@@ -294,7 +294,7 @@ export default function Base64ConverterTool() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-muted-foreground hover:text-foreground h-7 gap-1.5 text-xs"
+                      className="text-muted-foreground dark:hover:text-foreground h-7 gap-1.5 text-xs hover:text-white"
                       onClick={() => {
                         void copy(imageBase64)
                       }}
