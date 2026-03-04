@@ -1,12 +1,13 @@
 'use client'
 
 import * as React from 'react'
-import { ChevronRight, Terminal, Search, X } from 'lucide-react'
+import { ChevronRight, Terminal, Search, X, Star } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 import { tools, categories } from '@/lib/tools'
 import { Label } from '@/components/ui/label'
+import { useFavorites } from '@/hooks/use-favorites'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Sidebar,
@@ -27,6 +28,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const [searchQuery, setSearchQuery] = React.useState('')
 
+  const { favorites } = useFavorites()
+
   const filteredTools = React.useMemo(() => {
     if (!searchQuery.trim()) return tools
     const lower = searchQuery.toLowerCase()
@@ -34,6 +37,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       (t) => t.name.toLowerCase().includes(lower) || t.description.toLowerCase().includes(lower),
     )
   }, [searchQuery])
+
+  const favoriteTools = React.useMemo(() => {
+    return filteredTools.filter((t) => favorites.includes(t.id))
+  }, [filteredTools, favorites])
 
   return (
     <Sidebar {...props}>
@@ -82,6 +89,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </form>
       </SidebarHeader>
       <SidebarContent>
+        {favoriteTools.length > 0 && (
+          <SidebarGroup>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <div className="text-muted-foreground flex items-center px-2 py-1.5 text-xs font-semibold tracking-wider uppercase">
+                  <Star className="mr-2 h-3 w-3 fill-yellow-500 text-yellow-500" />
+                  Favorites
+                </div>
+                <SidebarMenuSub className="ml-0 border-none px-0">
+                  {favoriteTools.map((tool) => {
+                    const isActive = pathname === `/tools/${tool.id}`
+                    return (
+                      <SidebarMenuSubItem key={tool.id}>
+                        <SidebarMenuSubButton asChild isActive={isActive}>
+                          <Link href={`/tools/${tool.id}`}>
+                            <tool.icon className="mr-2 h-4 w-4 shrink-0" />
+                            <span>{tool.name}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    )
+                  })}
+                </SidebarMenuSub>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
         <SidebarGroup>
           <SidebarMenu>
             {categories.map((category) => {

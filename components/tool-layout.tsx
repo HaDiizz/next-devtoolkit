@@ -4,6 +4,7 @@ import { ReactNode } from 'react'
 import { Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCopyToClipboard } from '@/hooks/use-copy'
+import { FavoriteToggle } from '@/components/favorite-toggle'
 
 export function ToolLayout({
   title,
@@ -18,14 +19,17 @@ export function ToolLayout({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start gap-4">
-        <div className="bg-primary/10 text-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
-          <Icon className="h-6 w-6" />
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="bg-primary/10 text-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
+            <Icon className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="text-foreground text-2xl font-bold tracking-tight">{title}</h2>
+            <p className="text-muted-foreground mt-1 text-sm">{description}</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-foreground text-2xl font-bold tracking-tight">{title}</h2>
-          <p className="text-muted-foreground mt-1 text-sm">{description}</p>
-        </div>
+        <FavoriteToggle />
       </div>
       {children}
     </div>

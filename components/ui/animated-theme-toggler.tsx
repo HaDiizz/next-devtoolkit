@@ -86,7 +86,7 @@ export const AnimatedThemeToggler = ({
         void toggleTheme()
       }}
       className={cn(
-        'text-muted-foreground dark:hover:text-foreground size-9 transition-colors hover:text-white',
+        'text-muted-foreground dark:hover:text-foreground dark:hover:bg-secondary/80 hover:bg-secondary/80 hover:text-foreground size-9 transition-colors',
         className,
       )}
       {...props}
