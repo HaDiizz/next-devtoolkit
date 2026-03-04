@@ -2,6 +2,7 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
+import { FontSwitcher } from '@/components/font-switcher'
 
 export default function ToolsLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,9 +15,13 @@ export default function ToolsLayout({ children }: { children: React.ReactNode })
             <Separator orientation="vertical" className="mr-2 h-4" />
             <span className="text-sm font-semibold">DevToolkit</span>
           </div>
-          <AnimatedThemeToggler />
+          <div className="flex items-center gap-2">
+            <FontSwitcher />
+            <AnimatedThemeToggler />
+          </div>
         </header>
-        <header className="bg-background sticky top-0 z-[9999] hidden h-14 shrink-0 items-center justify-end border-b px-6 lg:flex">
+        <header className="bg-background sticky top-0 z-[9999] hidden h-14 shrink-0 items-center justify-end gap-2 border-b px-6 lg:flex">
+          <FontSwitcher />
           <AnimatedThemeToggler />
         </header>
         <main className="flex-1 overflow-auto">

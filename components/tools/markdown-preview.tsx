@@ -153,7 +153,7 @@ export default function MarkdownPreview() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-2 text-xs"
+              className="bg-secondary/30 hover:bg-secondary/80 text-muted-foreground hover:text-foreground h-8 gap-2 text-xs"
               onClick={() => {
                 void copy(markdown)
               }}
@@ -164,7 +164,7 @@ export default function MarkdownPreview() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-2 text-xs"
+              className="bg-secondary/30 hover:bg-secondary/80 text-muted-foreground hover:text-foreground h-8 gap-2 text-xs"
               onClick={handleDownload}
             >
               <Download className="h-3.5 w-3.5" />

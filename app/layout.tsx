@@ -1,14 +1,36 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import {
+  Geist,
+  Geist_Mono,
+  EB_Garamond,
+  Inter,
+  Roboto,
+  Playfair_Display,
+  Montserrat,
+  Open_Sans,
+  Poppins,
+  Lora,
+  Oswald,
+} from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/theme-provider'
+import { FontProvider } from '@/components/font-provider'
 import './globals.css'
 import Script from 'next/script'
 
-const _geist = Geist({ subsets: ['latin'] })
-const _geistMono = Geist_Mono({ subsets: ['latin'] })
+const _geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
+const _geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' })
+const _ebGaramond = EB_Garamond({ subsets: ['latin'], variable: '--font-serif' })
+const _inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const _roboto = Roboto({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-roboto' })
+const _playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' })
+const _montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat' })
+const _openSans = Open_Sans({ subsets: ['latin'], variable: '--font-open-sans' })
+const _poppins = Poppins({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-poppins' })
+const _lora = Lora({ subsets: ['latin'], variable: '--font-lora' })
+const _oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald' })
 
 export const metadata: Metadata = {
   title: {
@@ -129,7 +151,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${_geistMono.className} ${_geist.className} font-sans antialiased`}
+        className={`${_geistMono.variable} ${_geist.variable} ${_ebGaramond.variable} ${_inter.variable} ${_roboto.variable} ${_playfair.variable} ${_montserrat.variable} ${_openSans.variable} ${_poppins.variable} ${_lora.variable} ${_oswald.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <ThemeProvider
@@ -138,10 +160,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
-          <Analytics />
-          <SpeedInsights />
+          <FontProvider>
+            {children}
+            <Toaster />
+            <Analytics />
+            <SpeedInsights />
+          </FontProvider>
         </ThemeProvider>
         <Script id="register-sw" strategy="afterInteractive">
           {`
