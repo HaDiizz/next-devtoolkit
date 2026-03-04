@@ -1,23 +1,23 @@
 import type { MetadataRoute } from 'next'
 import { tools } from '@/lib/tools'
 
+export const revalidate = 3600
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://next-devtoolkit.vercel.app'
-
-  const toolUrls = tools.map((tool) => ({
-    url: `${baseUrl}/tools/${tool.id}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly' as const,
-    priority: 0.8,
-  }))
 
   return [
     {
       url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
+      lastModified: new Date().toISOString(),
+      changeFrequency: 'weekly',
       priority: 1,
     },
-    ...toolUrls,
+    ...tools.map((tool) => ({
+      url: `${baseUrl}/tools/${tool.id}`,
+      lastModified: new Date().toISOString(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
   ]
 }
