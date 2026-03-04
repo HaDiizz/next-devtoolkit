@@ -4,8 +4,15 @@
     "description": "Comprehensive developer utilities for modern software engineers. ตัวช่วยโปรแกรมเมอร์ จัดการข้อมูล ปรับแต่ง JSON และสร้าง Mock Data.",
     "start_url": "/",
     "display": "standalone",
+    "orientation": "any",
     "background_color": "#1a1a2e",
     "theme_color": "#1a1a2e",
+    "prefer_related_applications": false,
+    "categories": [
+        "developer",
+        "utilities",
+        "productivity"
+    ],
     "icons": [
         {
             "src": "/icon-32x32.png",
@@ -15,12 +22,14 @@
         {
             "src": "/icon-192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         },
         {
             "src": "/icon-512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         },
         {
             "src": "/icon.svg",
