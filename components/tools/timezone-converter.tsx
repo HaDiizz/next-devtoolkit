@@ -131,7 +131,7 @@ export default function TimezoneConverterTool() {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="bg-secondary border-border hover:text-muted-foreground h-9 w-full justify-between font-mono text-xs font-normal"
+                  className="bg-secondary border-border hover:bg-secondary/80 hover:text-muted-foreground h-9 w-full justify-between font-mono text-xs font-normal"
                 >
                   {format(date, 'PPP')}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50" />
@@ -228,7 +228,7 @@ export default function TimezoneConverterTool() {
               className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                 toTzList.includes(tz.value)
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-white'
+                  : 'bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-foreground'
               }`}
             >
               {tz.label}

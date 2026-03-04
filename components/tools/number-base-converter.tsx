@@ -47,7 +47,7 @@ export default function NumberBaseConverterTool() {
                 setFromBase(b.base)
                 setInput('')
               }}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${fromBase === b.base ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-white'}`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${fromBase === b.base ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-foreground'}`}
             >
               {b.label}
             </button>

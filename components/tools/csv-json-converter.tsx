@@ -180,7 +180,7 @@ export default function CsvJsonConverter() {
             variant="ghost"
             size="icon"
             onClick={toggleMode}
-            className="hover:bg-secondary text-muted-foreground dark:hover:text-foreground h-8 w-8 rounded-full hover:text-white"
+            className="hover:bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-foreground h-8 w-8 rounded-full"
           >
             <ArrowRightLeft className="h-4 w-4" />
           </Button>

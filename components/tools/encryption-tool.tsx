@@ -189,7 +189,7 @@ export default function EncryptionTool() {
               className={`rounded-lg border px-4 py-2 text-xs font-medium transition-colors ${
                 algorithm === algo
                   ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-secondary/50 text-muted-foreground dark:hover:text-foreground hover:text-white'
+                  : 'border-border bg-secondary/50 text-muted-foreground dark:hover:text-foreground hover:text-foreground'
               }`}
             >
               {algo}

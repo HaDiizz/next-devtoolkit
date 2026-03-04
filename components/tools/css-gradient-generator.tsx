@@ -362,7 +362,7 @@ export default function CssGradientGenerator() {
                     size="icon"
                     onClick={() => removeStop(stop.id)}
                     disabled={stops.length <= 2}
-                    className="bg-destructive text-destructive-foreground absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 dark:hover:bg-destructive/90 dark:hover:text-destructive-foreground absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
                   >
                     <X className="h-3 w-3" />
                   </Button>

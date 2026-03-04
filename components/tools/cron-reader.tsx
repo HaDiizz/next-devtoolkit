@@ -262,7 +262,7 @@ export default function CronReaderTool() {
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               cron.trim() === p.value
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-white'
+                : 'bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-foreground'
             }`}
           >
             {p.label}

@@ -83,7 +83,7 @@ export default function JsonFormatterTool() {
             <button
               key={n}
               onClick={() => setIndent(n)}
-              className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${indent === n ? 'bg-primary text-primary-foreground' : 'text-muted-foreground dark:hover:text-foreground hover:text-white'}`}
+              className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${indent === n ? 'bg-primary text-primary-foreground' : 'text-muted-foreground dark:hover:text-foreground hover:text-foreground'}`}
             >
               {n}
             </button>

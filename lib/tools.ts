@@ -27,6 +27,7 @@ import {
   Paintbrush,
   Diff,
   Key,
+  SearchCheck,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -261,6 +262,15 @@ export const tools: Tool[] = [
     description: 'Generate valid random Thai Citizen ID numbers for testing',
     icon: CreditCard,
     category: 'Data',
+  },
+
+  {
+    id: 'seo-tool',
+    name: 'SEO Toolkit',
+    description:
+      'Preview OG cards, score SEO, check best practices, generate manifest.json, and export favicon assets',
+    icon: SearchCheck,
+    category: 'SEO',
   },
 ]
 
