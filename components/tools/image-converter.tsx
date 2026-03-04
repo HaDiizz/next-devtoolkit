@@ -293,7 +293,7 @@ export default function ImageConverterTool() {
               <Button
                 variant="ghost"
                 size="sm"
-                className={`text-muted-foreground mt-5 h-8 w-8 rounded-full p-0 ${lockAspectRatio ? 'text-primary' : ''}`}
+                className={`text-muted-foreground dark:hover:text-foreground mt-5 h-8 w-8 rounded-full p-0 hover:text-white ${lockAspectRatio ? 'text-primary' : ''}`}
                 onClick={() => setLockAspectRatio(!lockAspectRatio)}
                 title={lockAspectRatio ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
               >

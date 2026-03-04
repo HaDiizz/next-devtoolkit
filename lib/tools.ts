@@ -28,6 +28,7 @@ import {
   Diff,
   Key,
   SearchCheck,
+  Zap,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -132,6 +133,13 @@ export const tools: Tool[] = [
     name: 'Image Converter',
     description: 'Convert images between PNG, JPEG, WebP, and BMP formats',
     icon: ImageIcon,
+    category: 'Converters',
+  },
+  {
+    id: 'file-compressor',
+    name: 'File Compressor',
+    description: 'Optimize image, PDF, and generic files with advanced compression techniques',
+    icon: Zap,
     category: 'Converters',
   },
   {

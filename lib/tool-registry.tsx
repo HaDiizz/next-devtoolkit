@@ -16,6 +16,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   'timezone-converter': dynamic(() => import('@/components/tools/timezone-converter')),
   'base64-converter': dynamic(() => import('@/components/tools/base64-converter')),
   'image-converter': dynamic(() => import('@/components/tools/image-converter')),
+  'file-compressor': dynamic(() => import('@/components/tools/file-compressor')),
   'color-converter': dynamic(() => import('@/components/tools/color-converter')),
   'number-base-converter': dynamic(() => import('@/components/tools/number-base-converter')),
   'csv-json-converter': dynamic(() => import('@/components/tools/csv-json-converter')),
@@ -38,6 +39,8 @@ const toolComponents: Record<string, React.ComponentType> = {
   // Data
   'mock-data-generator': dynamic(() => import('@/components/tools/mock-data-generator')),
   'thai-cid-generator': dynamic(() => import('@/components/tools/thai-cid-generator')),
+  // SEO
+  'seo-tool': dynamic(() => import('@/components/tools/seo-tool')),
 }
 
 export function getToolComponent(id: string): React.ComponentType | null {
