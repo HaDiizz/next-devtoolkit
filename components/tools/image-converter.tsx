@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { ImageIcon, Upload, X, Download, ArrowRight } from 'lucide-react'
+import { ImageIcon, Upload, X, Download, ArrowRight, Lock, Unlock, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { ToolLayout } from '@/components/tool-layout'
@@ -25,6 +25,11 @@ export default function ImageConverterTool() {
   const [convertedUrl, setConvertedUrl] = useState('')
   const [convertedSize, setConvertedSize] = useState(0)
   const [sourceSize, setSourceSize] = useState(0)
+  const [originalWidth, setOriginalWidth] = useState(0)
+  const [originalHeight, setOriginalHeight] = useState(0)
+  const [width, setWidth] = useState(0)
+  const [height, setHeight] = useState(0)
+  const [lockAspectRatio, setLockAspectRatio] = useState(true)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -37,7 +42,17 @@ export default function ImageConverterTool() {
 
     const reader = new FileReader()
     reader.onload = () => {
-      setSourcePreview(reader.result as string)
+      const dataUrl = reader.result as string
+      setSourcePreview(dataUrl)
+
+      const img = new window.Image()
+      img.onload = () => {
+        setOriginalWidth(img.naturalWidth)
+        setOriginalHeight(img.naturalHeight)
+        setWidth(img.naturalWidth)
+        setHeight(img.naturalHeight)
+      }
+      img.src = dataUrl
     }
     reader.onerror = () => setError('Failed to read file.')
     reader.readAsDataURL(file)
@@ -62,8 +77,8 @@ export default function ImageConverterTool() {
     img.crossOrigin = 'anonymous'
     img.onload = () => {
       const canvas = document.createElement('canvas')
-      canvas.width = img.naturalWidth
-      canvas.height = img.naturalHeight
+      canvas.width = width || img.naturalWidth
+      canvas.height = height || img.naturalHeight
       const ctx = canvas.getContext('2d')
       if (!ctx) {
         setError('Canvas context not available.')
@@ -76,7 +91,7 @@ export default function ImageConverterTool() {
         ctx.fillRect(0, 0, canvas.width, canvas.height)
       }
 
-      ctx.drawImage(img, 0, 0)
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
       const q = outputFormat === 'image/png' ? undefined : quality / 100
       const dataUrl = canvas.toDataURL(outputFormat, q)
@@ -107,6 +122,10 @@ export default function ImageConverterTool() {
     setSourceName('')
     setSourceType('')
     setSourceSize(0)
+    setOriginalWidth(0)
+    setOriginalHeight(0)
+    setWidth(0)
+    setHeight(0)
     setConvertedUrl('')
     setConvertedSize(0)
     setError('')
@@ -235,6 +254,77 @@ export default function ImageConverterTool() {
               </div>
             </div>
           )}
+
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-muted-foreground text-xs">Resize Image</Label>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground dark:hover:text-foreground h-6 w-6"
+                onClick={() => {
+                  setWidth(originalWidth)
+                  setHeight(originalHeight)
+                  setConvertedUrl('')
+                }}
+                title="Reset to original size"
+              >
+                <RefreshCw className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 space-y-1.5">
+                <Label className="text-muted-foreground text-[10px]">Width (px)</Label>
+                <input
+                  type="number"
+                  value={width || ''}
+                  onChange={(e) => {
+                    const w = parseInt(e.target.value) || 0
+                    setWidth(w)
+                    if (lockAspectRatio && originalWidth > 0) {
+                      setHeight(Math.round((w * originalHeight) / originalWidth))
+                    }
+                    setConvertedUrl('')
+                  }}
+                  className="bg-secondary border-border text-foreground focus:border-primary/50 w-full rounded-md border px-3 py-1.5 font-mono text-xs outline-none"
+                />
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`text-muted-foreground mt-5 h-8 w-8 rounded-full p-0 ${lockAspectRatio ? 'text-primary' : ''}`}
+                onClick={() => setLockAspectRatio(!lockAspectRatio)}
+                title={lockAspectRatio ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
+              >
+                {lockAspectRatio ? (
+                  <Lock className="h-3.5 w-3.5" />
+                ) : (
+                  <Unlock className="h-3.5 w-3.5" />
+                )}
+              </Button>
+
+              <div className="flex-1 space-y-1.5">
+                <Label className="text-muted-foreground text-[10px]">Height (px)</Label>
+                <input
+                  type="number"
+                  value={height || ''}
+                  onChange={(e) => {
+                    const h = parseInt(e.target.value) || 0
+                    setHeight(h)
+                    if (lockAspectRatio && originalHeight > 0) {
+                      setWidth(Math.round((h * originalWidth) / originalHeight))
+                    }
+                    setConvertedUrl('')
+                  }}
+                  className="bg-secondary border-border text-foreground focus:border-primary/50 w-full rounded-md border px-3 py-1.5 font-mono text-xs outline-none"
+                />
+              </div>
+            </div>
+            <p className="text-muted-foreground text-[10px]">
+              Original: {originalWidth}x{originalHeight}px
+            </p>
+          </div>
 
           {/* Convert button */}
           <Button
