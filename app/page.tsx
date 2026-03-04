@@ -31,13 +31,13 @@ function FeatureCard({
   description: string
 }) {
   return (
-    <div className="border-border bg-card flex items-start gap-4 rounded-xl border p-5">
-      <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
-        <Icon className="h-5 w-5" />
+    <div className="group border-border bg-card hover:border-primary/50 flex flex-col items-center gap-6 rounded-2xl border p-8 text-center transition-all hover:-translate-y-2 hover:shadow-2xl">
+      <div className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground flex h-14 w-14 shrink-0 items-center justify-center rounded-xl transition-colors duration-300">
+        <Icon className="h-7 w-7" />
       </div>
       <div>
-        <h4 className="text-foreground text-sm font-semibold">{title}</h4>
-        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">{description}</p>
+        <h4 className="text-foreground mb-3 text-lg font-bold">{title}</h4>
+        <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
       </div>
     </div>
   )
@@ -46,30 +46,29 @@ function FeatureCard({
 export default function HomePage() {
   return (
     <div className="bg-background min-h-screen">
-      {/* Hero */}
-      <header className="border-border border-b">
+      <header className="border-border flex min-h-screen flex-col items-center justify-center border-b">
         <div className="mx-auto flex max-w-6xl flex-col items-center px-6 py-20 text-center lg:py-28">
-          <div className="bg-primary text-primary-foreground mb-6 flex h-16 w-16 items-center justify-center rounded-2xl">
-            <Terminal className="h-8 w-8" />
+          <div className="bg-primary text-primary-foreground mb-8 flex h-20 w-20 items-center justify-center rounded-2xl shadow-xl">
+            <Terminal className="h-10 w-10" />
           </div>
-          <h1 className="text-foreground text-4xl font-bold tracking-tight text-balance lg:text-5xl">
+          <h1 className="text-foreground text-5xl font-extrabold tracking-tight text-balance lg:text-7xl">
             Developer Toolkit
           </h1>
-          <p className="text-muted-foreground mt-4 max-w-xl text-base leading-relaxed text-pretty lg:text-lg">
+          <p className="text-muted-foreground mt-6 max-w-2xl text-lg leading-relaxed text-pretty lg:text-xl">
             A comprehensive collection of 24+ developer utilities and SDK tools. Generate IDs, hash
             passwords, decode JWTs, compare JSON, test regex, and more.
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-12 flex flex-wrap justify-center gap-4">
             <Link
               href="/tools/uuid-generator"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-colors"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-xl px-8 py-4 text-base font-semibold transition-all hover:scale-105 active:scale-95"
             >
               Get Started
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-5 w-5" />
             </Link>
             <a
               href="#tools"
-              className="border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 inline-flex items-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-medium transition-colors"
+              className="border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 inline-flex items-center gap-2 rounded-xl border px-8 py-4 text-base font-semibold transition-all hover:scale-105 active:scale-95"
             >
               Browse Tools
             </a>
@@ -77,36 +76,46 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Features */}
-      <section className="border-border border-b py-16">
+      <section className="border-border relative flex min-h-screen items-center overflow-hidden border-b py-24">
+        <div className="bg-primary/5 absolute top-1/2 left-1/2 -z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px]" />
+
         <div className="mx-auto max-w-6xl px-6">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="mb-16 text-center">
+            <h2 className="text-foreground mb-4 text-3xl font-bold tracking-tight lg:text-4xl">
+              Powerful tools, built for privacy
+            </h2>
+            <p className="text-muted-foreground mx-auto max-w-2xl text-base lg:text-lg">
+              Our toolkit is designed with the modern developer in mind. Fast, secure, and
+              accessible anywhere, ensuring your workflow remains uninterrupted and private.
+            </p>
+          </div>
+
+          <div className="grid gap-8 sm:grid-cols-3">
             <FeatureCard
               icon={Zap}
               title="Instant Results"
-              description="All tools run entirely in the browser with zero server latency. No data ever leaves your machine."
+              description="All tools run entirely in the browser with zero server latency. No data ever leaves your machine, ensuring maximum speed."
             />
             <FeatureCard
               icon={Lock}
               title="Privacy First"
-              description="Nothing is stored or tracked. Your data stays in your browser session and is never sent to any server."
+              description="Nothing is stored or tracked. Your sensitive data stays in your browser session and is never sent to any external server."
             />
             <FeatureCard
               icon={Globe}
               title="Always Available"
-              description="Works offline after first load. No sign-up required. Free and open for all developers."
+              description="Full offline support after the initial load. No sign-up required. Free and open-source for all developers globally."
             />
           </div>
         </div>
       </section>
 
-      {/* Tools Grid */}
-      <section id="tools" className="py-16">
-        <div className="mx-auto max-w-6xl px-6">
+      <section id="tools" className="flex min-h-screen items-center py-20">
+        <div className="mx-auto w-full max-w-6xl px-6">
           {categories.map((category) => (
-            <div key={category} className="mb-12 last:mb-0">
-              <h2 className="text-foreground mb-1 text-lg font-bold">{category}</h2>
-              <p className="text-muted-foreground mb-6 text-sm">
+            <div key={category} className="mb-16 last:mb-0">
+              <h2 className="text-foreground mb-2 text-2xl font-bold">{category}</h2>
+              <p className="text-muted-foreground mb-8 text-base">
                 {category === 'Generators' &&
                   'Create unique identifiers, passwords, hashes, encryption, secure hashing, and placeholder text'}
                 {category === 'Converters' &&
@@ -119,7 +128,7 @@ export default function HomePage() {
                 {category === 'Date / Time' && 'Parse cron expressions and work with timezones'}
                 {category === 'Data' && 'Generate mock data and test IDs'}
               </p>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {tools
                   .filter((t) => t.category === category)
                   .map((tool) => (
@@ -131,10 +140,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-border border-t py-8">
+      <footer className="border-border border-t py-10">
         <div className="mx-auto max-w-6xl px-6 text-center">
-          <p className="text-muted-foreground text-xs">
+          <p className="text-muted-foreground text-sm">
             DevToolkit — Built with Next.js & shadcn/ui. All tools run client-side for maximum
             privacy.
           </p>
