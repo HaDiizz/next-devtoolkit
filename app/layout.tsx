@@ -18,7 +18,6 @@ import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { FontProvider } from '@/components/font-provider'
 import './globals.css'
-import Script from 'next/script'
 
 const _geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
 const _geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' })
@@ -167,24 +166,6 @@ export default function RootLayout({
             <SpeedInsights />
           </FontProvider>
         </ThemeProvider>
-        <Script id="register-sw" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                  registration.addEventListener('updatefound', function() {
-                    var newWorker = registration.installing;
-                    newWorker.addEventListener('statechange', function() {
-                      if (newWorker.state === 'activated') {
-                        window.location.reload();
-                      }
-                    });
-                  });
-                });
-              });
-            }
-          `}
-        </Script>
       </body>
     </html>
   )
