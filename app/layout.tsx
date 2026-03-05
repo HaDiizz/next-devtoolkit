@@ -17,6 +17,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { FontProvider } from '@/components/font-provider'
+import RegisterSW from '@/components/register-sw'
 import './globals.css'
 
 const _geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
@@ -153,6 +154,7 @@ export default function RootLayout({
         className={`${_geistMono.variable} ${_geist.variable} ${_ebGaramond.variable} ${_inter.variable} ${_roboto.variable} ${_playfair.variable} ${_montserrat.variable} ${_openSans.variable} ${_poppins.variable} ${_lora.variable} ${_oswald.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
+        <RegisterSW />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
