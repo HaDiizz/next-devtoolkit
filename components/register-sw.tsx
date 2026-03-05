@@ -6,13 +6,13 @@ export default function RegisterSW() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
-        .register('/serwist/sw.js')
+        .register('/serwist/sw.js', {
+          scope: '/',
+        })
         .then((reg) => {
           console.log('SW registered', reg)
         })
-        .catch((err) => {
-          console.error('SW failed', err)
-        })
+        .catch(console.error)
     }
   }, [])
 
