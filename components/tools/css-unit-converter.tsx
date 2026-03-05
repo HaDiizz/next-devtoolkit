@@ -7,12 +7,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Copy, Check, Settings2 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { ToolLayout } from '@/components/tool-layout'
+import { tools } from '@/lib/tools'
 
 type Unit = 'px' | 'rem' | 'em' | 'pt' | 'vw' | 'vh' | '%'
 
 const UNITS: Unit[] = ['px', 'rem', 'em', 'pt', 'vw', 'vh', '%']
 
 export default function CssUnitConverter() {
+  const tool = tools.find((t) => t.id === 'css-unit-converter')!
   const [inputValue, setInputValue] = useState<number | string>(16)
   const [inputUnit, setInputUnit] = useState<Unit>('px')
 
@@ -95,147 +98,153 @@ export default function CssUnitConverter() {
   }, [basePx, rfs, cfs, vw, vh, pSize])
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
-      <div className="space-y-6">
-        <div className="border-border bg-card space-y-4 rounded-xl border p-5">
-          <div className="text-foreground border-border flex items-center gap-2 border-b pb-2 text-sm font-semibold">
-            <Settings2 className="text-muted-foreground h-4 w-4" />
-            Context Settings
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">Root Font Size (for rem)</Label>
-              <div className="relative">
-                <Input
-                  type="number"
-                  value={rootFontSize}
-                  onChange={(e) => setRootFontSize(e.target.value)}
-                  className="bg-secondary pr-8"
-                />
-                <span className="text-muted-foreground absolute top-2.5 right-3 text-xs">px</span>
-              </div>
+    <ToolLayout title={tool.name} description={tool.description} icon={tool.icon}>
+      <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
+        <div className="space-y-6">
+          <div className="border-border bg-card space-y-4 rounded-xl border p-5">
+            <div className="text-foreground border-border flex items-center gap-2 border-b pb-2 text-sm font-semibold">
+              <Settings2 className="text-muted-foreground h-4 w-4" />
+              Context Settings
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">Context Font Size (for em)</Label>
-              <div className="relative">
-                <Input
-                  type="number"
-                  value={contextFontSize}
-                  onChange={(e) => setContextFontSize(e.target.value)}
-                  className="bg-secondary pr-8"
-                />
-                <span className="text-muted-foreground absolute top-2.5 right-3 text-xs">px</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">Viewport Size (for vw, vh)</Label>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Root Font Size (for rem)</Label>
                 <div className="relative">
                   <Input
                     type="number"
-                    value={viewportWidth}
-                    onChange={(e) => setViewportWidth(e.target.value)}
-                    className="bg-secondary pr-6"
-                    placeholder="W"
+                    value={rootFontSize}
+                    onChange={(e) => setRootFontSize(e.target.value)}
+                    className="bg-secondary pr-8"
                   />
-                  <span className="text-muted-foreground absolute top-2.5 right-2 text-xs">W</span>
+                  <span className="text-muted-foreground absolute top-2.5 right-3 text-xs">px</span>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Context Font Size (for em)</Label>
                 <div className="relative">
                   <Input
                     type="number"
-                    value={viewportHeight}
-                    onChange={(e) => setViewportHeight(e.target.value)}
-                    className="bg-secondary pr-6"
-                    placeholder="H"
+                    value={contextFontSize}
+                    onChange={(e) => setContextFontSize(e.target.value)}
+                    className="bg-secondary pr-8"
                   />
-                  <span className="text-muted-foreground absolute top-2.5 right-2 text-xs">H</span>
+                  <span className="text-muted-foreground absolute top-2.5 right-3 text-xs">px</span>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">Parent Size (for %)</Label>
-              <div className="relative">
-                <Input
-                  type="number"
-                  value={parentSize}
-                  onChange={(e) => setParentSize(e.target.value)}
-                  className="bg-secondary pr-8"
-                />
-                <span className="text-muted-foreground absolute top-2.5 right-3 text-xs">px</span>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Viewport Size (for vw, vh)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      value={viewportWidth}
+                      onChange={(e) => setViewportWidth(e.target.value)}
+                      className="bg-secondary pr-6"
+                      placeholder="W"
+                    />
+                    <span className="text-muted-foreground absolute top-2.5 right-2 text-xs">
+                      W
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      value={viewportHeight}
+                      onChange={(e) => setViewportHeight(e.target.value)}
+                      className="bg-secondary pr-6"
+                      placeholder="H"
+                    />
+                    <span className="text-muted-foreground absolute top-2.5 right-2 text-xs">
+                      H
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="space-y-6">
-        <div className="border-border bg-card rounded-xl border p-6 shadow-sm">
-          <div className="space-y-4">
-            <Label className="text-foreground block text-sm font-semibold">Input Value</Label>
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <div className="relative flex-1">
-                <Input
-                  type="number"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  className="focus-visible:border-primary h-14 border-2 px-4 font-mono text-2xl transition-colors focus-visible:ring-0"
-                />
-              </div>
-              <div className="sm:w-32">
-                <Select value={inputUnit} onValueChange={(value) => setInputUnit(value as Unit)}>
-                  <SelectTrigger className="border-input bg-background h-14 w-full border-2 text-sm font-semibold shadow-sm focus:ring-0">
-                    <SelectValue placeholder="Select unit" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    {UNITS.map((u) => (
-                      <SelectItem key={u} value={u}>
-                        {u}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Parent Size (for %)</Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    value={parentSize}
+                    onChange={(e) => setParentSize(e.target.value)}
+                    className="bg-secondary pr-8"
+                  />
+                  <span className="text-muted-foreground absolute top-2.5 right-3 text-xs">px</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {allConversions.map((conv, i) => {
-            const isSelf = conv.unit === inputUnit
-            return (
-              <div
-                key={conv.unit}
-                className={`flex items-center justify-between rounded-xl border p-4 transition-all ${isSelf ? 'bg-primary/5 border-primary/20' : 'bg-card border-border hover:border-border/80'}`}
-              >
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground text-[10px] tracking-widest uppercase">
-                    {conv.unit}
-                  </Label>
-                  <div className="text-foreground font-mono text-lg">{conv.value}</div>
+        <div className="space-y-6">
+          <div className="border-border bg-card rounded-xl border p-6 shadow-sm">
+            <div className="space-y-4">
+              <Label className="text-foreground block text-sm font-semibold">Input Value</Label>
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <div className="relative flex-1">
+                  <Input
+                    type="number"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    className="focus-visible:border-primary h-14 border-2 px-4 font-mono text-2xl transition-colors focus-visible:ring-0"
+                  />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground dark:hover:text-foreground h-8 w-8 shrink-0 hover:text-white"
-                  onClick={() => handleCopy(`${conv.value}${conv.unit}`, i)}
-                  title={`Copy ${conv.value}${conv.unit}`}
+                <div className="sm:w-32">
+                  <Select value={inputUnit} onValueChange={(value) => setInputUnit(value as Unit)}>
+                    <SelectTrigger className="border-input bg-background h-14 w-full border-2 text-sm font-semibold shadow-sm focus:ring-0">
+                      <SelectValue placeholder="Select unit" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {UNITS.map((u) => (
+                        <SelectItem key={u} value={u}>
+                          {u}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {allConversions.map((conv, i) => {
+              const isSelf = conv.unit === inputUnit
+              return (
+                <div
+                  key={conv.unit}
+                  className={`flex items-center justify-between rounded-xl border p-4 transition-all ${isSelf ? 'bg-primary/5 border-primary/20' : 'bg-card border-border hover:border-border/80'}`}
                 >
-                  {copiedIndex === i ? (
-                    <Check className="h-4 w-4 text-emerald-500" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            )
-          })}
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground text-[10px] tracking-widest uppercase">
+                      {conv.unit}
+                    </Label>
+                    <div className="text-foreground font-mono text-lg">{conv.value}</div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground dark:hover:text-foreground h-8 w-8 shrink-0 hover:text-white"
+                    onClick={() => handleCopy(`${conv.value}${conv.unit}`, i)}
+                    title={`Copy ${conv.value}${conv.unit}`}
+                  >
+                    {copiedIndex === i ? (
+                      <Check className="h-4 w-4 text-emerald-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </ToolLayout>
   )
 }

@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Copy, Plus, X, Shuffle, Image as ImageIcon, Check } from 'lucide-react'
+import { ToolLayout } from '@/components/tool-layout'
+import { tools } from '@/lib/tools'
 
 interface ColorStop {
   id: string
@@ -33,6 +35,7 @@ function randomColor() {
 }
 
 export default function CssGradientGenerator() {
+  const tool = tools.find((t) => t.id === 'css-gradient-generator')!
   const [mode, setMode] = useState<'linear' | 'radial' | 'conic'>('linear')
   const [stops, setStops] = useState<ColorStop[]>([
     { id: '1', color: '#4f46e5', position: 0, opacity: 1 },
@@ -152,9 +155,7 @@ export default function CssGradientGenerator() {
     } else if (mode === 'radial') {
       grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(canvas.width, canvas.height) / 2)
     } else {
-      // Conic requires DOMMatrix in canvas, fallback to drawing simple rect here as a limitation
-      // Best to just use a huge SVG and convert to canvas, or rely on CSS for actual app usage.
-      grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height) // Mock fallback for export
+      grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
     }
 
     stops.forEach((s) => {
@@ -171,236 +172,238 @@ export default function CssGradientGenerator() {
   }
 
   return (
-    <div className="space-y-6">
-      <div
-        className="border-border h-48 w-full rounded-xl border shadow-inner transition-all duration-300 sm:h-64"
-        style={{ background: cssValue }}
-      />
-      <canvas ref={canvasRef} className="hidden" />
+    <ToolLayout title={tool.name} description={tool.description} icon={tool.icon}>
+      <div className="space-y-6">
+        <div
+          className="border-border h-48 w-full rounded-xl border shadow-inner transition-all duration-300 sm:h-64"
+          style={{ background: cssValue }}
+        />
+        <canvas ref={canvasRef} className="hidden" />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
-        <div className="space-y-6">
-          <div className="border-border bg-card space-y-5 rounded-xl border p-5">
-            <div className="flex items-center justify-between">
-              <Label className="text-foreground text-sm font-semibold">Gradient Style</Label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={randomize}
-                className="text-muted-foreground dark:hover:text-foreground h-8 gap-1.5 text-xs leading-none hover:text-white"
-              >
-                <Shuffle className="h-3 w-3" /> Randomize
-              </Button>
-            </div>
-
-            <Tabs value={mode} onValueChange={(v) => setMode(v as 'linear' | 'radial' | 'conic')}>
-              <TabsList className="bg-secondary grid w-full grid-cols-3">
-                <TabsTrigger value="linear" className="text-xs">
-                  Linear
-                </TabsTrigger>
-                <TabsTrigger value="radial" className="text-xs">
-                  Radial
-                </TabsTrigger>
-                <TabsTrigger value="conic" className="text-xs">
-                  Conic
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            {mode === 'linear' && (
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <Label className="text-muted-foreground text-xs font-medium">Angle (deg)</Label>
-                  <span className="text-primary font-mono text-xs">{linearAngle}°</span>
-                </div>
-                <Slider
-                  value={[linearAngle]}
-                  onValueChange={([v]) => setLinearAngle(v)}
-                  min={0}
-                  max={360}
-                  step={1}
-                />
+        <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
+          <div className="space-y-6">
+            <div className="border-border bg-card space-y-5 rounded-xl border p-5">
+              <div className="flex items-center justify-between">
+                <Label className="text-foreground text-sm font-semibold">Gradient Style</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={randomize}
+                  className="text-muted-foreground dark:hover:text-foreground h-8 gap-1.5 text-xs leading-none hover:text-white"
+                >
+                  <Shuffle className="h-3 w-3" /> Randomize
+                </Button>
               </div>
-            )}
 
-            {mode === 'radial' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-xs font-medium">Shape</Label>
-                  <Select value={radialShape} onValueChange={setRadialShape}>
-                    <SelectTrigger className="text-xs">
-                      <SelectValue placeholder="Select shape" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="circle">Circle</SelectItem>
-                      <SelectItem value="ellipse">Ellipse</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-xs font-medium">Position</Label>
-                  <Select value={radialPosition} onValueChange={setRadialPosition}>
-                    <SelectTrigger className="text-xs">
-                      <SelectValue placeholder="Select position" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="center">Center</SelectItem>
-                      <SelectItem value="top left">Top Left</SelectItem>
-                      <SelectItem value="top right">Top Right</SelectItem>
-                      <SelectItem value="bottom left">Bottom Left</SelectItem>
-                      <SelectItem value="bottom right">Bottom Right</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
+              <Tabs value={mode} onValueChange={(v) => setMode(v as 'linear' | 'radial' | 'conic')}>
+                <TabsList className="bg-secondary grid w-full grid-cols-3">
+                  <TabsTrigger value="linear" className="text-xs">
+                    Linear
+                  </TabsTrigger>
+                  <TabsTrigger value="radial" className="text-xs">
+                    Radial
+                  </TabsTrigger>
+                  <TabsTrigger value="conic" className="text-xs">
+                    Conic
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
 
-            {mode === 'conic' && (
-              <div className="grid grid-cols-2 gap-4">
+              {mode === 'linear' && (
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <Label className="text-muted-foreground text-xs font-medium">Angle</Label>
-                    <span className="text-primary font-mono text-xs">{conicAngle}°</span>
+                    <Label className="text-muted-foreground text-xs font-medium">Angle (deg)</Label>
+                    <span className="text-primary font-mono text-xs">{linearAngle}°</span>
                   </div>
                   <Slider
-                    value={[conicAngle]}
-                    onValueChange={([v]) => setConicAngle(v)}
+                    value={[linearAngle]}
+                    onValueChange={([v]) => setLinearAngle(v)}
                     min={0}
                     max={360}
                     step={1}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-xs font-medium">Position</Label>
-                  <Select value={conicPosition} onValueChange={setConicPosition}>
-                    <SelectTrigger className="text-xs">
-                      <SelectValue placeholder="Select position" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="center">Center</SelectItem>
-                      <SelectItem value="top left">Top Left</SelectItem>
-                      <SelectItem value="top right">Top Right</SelectItem>
-                      <SelectItem value="bottom left">Bottom Left</SelectItem>
-                      <SelectItem value="bottom right">Bottom Right</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
 
-          <div className="border-border bg-card space-y-4 rounded-xl border p-5">
-            <div className="flex items-center justify-between">
-              <Label className="text-foreground text-sm font-semibold">Color Stops</Label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addStop}
-                disabled={stops.length >= 8}
-                className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
-              >
-                <Plus className="h-3 w-3" /> Add
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {stops.map((stop) => (
-                <div
-                  key={stop.id}
-                  className="border-border bg-secondary/30 group relative flex items-center gap-3 rounded-lg border p-3"
-                >
-                  <div className="flex flex-col gap-2">
-                    <Input
-                      type="color"
-                      value={stop.color}
-                      title="Color"
-                      onChange={(e) => updateStop(stop.id, 'color', e.target.value)}
-                      className="bg-secondary h-8 w-12 cursor-pointer p-1"
-                    />
+              {mode === 'radial' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground text-xs font-medium">Shape</Label>
+                    <Select value={radialShape} onValueChange={setRadialShape}>
+                      <SelectTrigger className="text-xs">
+                        <SelectValue placeholder="Select shape" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="circle">Circle</SelectItem>
+                        <SelectItem value="ellipse">Ellipse</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={stop.color}
-                        onChange={(e) => updateStop(stop.id, 'color', e.target.value)}
-                        className="bg-secondary h-7 w-20 font-mono text-xs"
-                      />
-                      <span className="text-muted-foreground w-12 text-right text-xs">
-                        {stop.position}%
-                      </span>
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground text-xs font-medium">Position</Label>
+                    <Select value={radialPosition} onValueChange={setRadialPosition}>
+                      <SelectTrigger className="text-xs">
+                        <SelectValue placeholder="Select position" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="center">Center</SelectItem>
+                        <SelectItem value="top left">Top Left</SelectItem>
+                        <SelectItem value="top right">Top Right</SelectItem>
+                        <SelectItem value="bottom left">Bottom Left</SelectItem>
+                        <SelectItem value="bottom right">Bottom Right</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              {mode === 'conic' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <Label className="text-muted-foreground text-xs font-medium">Angle</Label>
+                      <span className="text-primary font-mono text-xs">{conicAngle}°</span>
                     </div>
                     <Slider
-                      value={[stop.position]}
-                      onValueChange={([v]) => updateStop(stop.id, 'position', v)}
+                      value={[conicAngle]}
+                      onValueChange={([v]) => setConicAngle(v)}
                       min={0}
-                      max={100}
+                      max={360}
                       step={1}
                     />
                   </div>
-                  <div className="w-16 space-y-1">
-                    <Label className="text-muted-foreground block text-center text-[9px] uppercase">
-                      Opacity
-                    </Label>
-                    <Input
-                      type="number"
-                      value={stop.opacity}
-                      onChange={(e) =>
-                        updateStop(
-                          stop.id,
-                          'opacity',
-                          Math.max(0, Math.min(1, Number(e.target.value))),
-                        )
-                      }
-                      step={0.1}
-                      min={0}
-                      max={1}
-                      className="bg-secondary h-7 px-1 text-center font-mono text-[10px]"
-                    />
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground text-xs font-medium">Position</Label>
+                    <Select value={conicPosition} onValueChange={setConicPosition}>
+                      <SelectTrigger className="text-xs">
+                        <SelectValue placeholder="Select position" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="center">Center</SelectItem>
+                        <SelectItem value="top left">Top Left</SelectItem>
+                        <SelectItem value="top right">Top Right</SelectItem>
+                        <SelectItem value="bottom left">Bottom Left</SelectItem>
+                        <SelectItem value="bottom right">Bottom Right</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeStop(stop.id)}
-                    disabled={stops.length <= 2}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 dark:hover:bg-destructive/90 dark:hover:text-destructive-foreground absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
                 </div>
-              ))}
+              )}
+            </div>
+
+            <div className="border-border bg-card space-y-4 rounded-xl border p-5">
+              <div className="flex items-center justify-between">
+                <Label className="text-foreground text-sm font-semibold">Color Stops</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addStop}
+                  disabled={stops.length >= 8}
+                  className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
+                >
+                  <Plus className="h-3 w-3" /> Add
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {stops.map((stop) => (
+                  <div
+                    key={stop.id}
+                    className="border-border bg-secondary/30 group relative flex items-center gap-3 rounded-lg border p-3"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <Input
+                        type="color"
+                        value={stop.color}
+                        title="Color"
+                        onChange={(e) => updateStop(stop.id, 'color', e.target.value)}
+                        className="bg-secondary h-8 w-12 cursor-pointer p-1"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={stop.color}
+                          onChange={(e) => updateStop(stop.id, 'color', e.target.value)}
+                          className="bg-secondary h-7 w-20 font-mono text-xs"
+                        />
+                        <span className="text-muted-foreground w-12 text-right text-xs">
+                          {stop.position}%
+                        </span>
+                      </div>
+                      <Slider
+                        value={[stop.position]}
+                        onValueChange={([v]) => updateStop(stop.id, 'position', v)}
+                        min={0}
+                        max={100}
+                        step={1}
+                      />
+                    </div>
+                    <div className="w-16 space-y-1">
+                      <Label className="text-muted-foreground block text-center text-[9px] uppercase">
+                        Opacity
+                      </Label>
+                      <Input
+                        type="number"
+                        value={stop.opacity}
+                        onChange={(e) =>
+                          updateStop(
+                            stop.id,
+                            'opacity',
+                            Math.max(0, Math.min(1, Number(e.target.value))),
+                          )
+                        }
+                        step={0.1}
+                        min={0}
+                        max={1}
+                        className="bg-secondary h-7 px-1 text-center font-mono text-[10px]"
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeStop(stop.id)}
+                      disabled={stops.length <= 2}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90 dark:hover:bg-destructive/90 dark:hover:text-destructive-foreground absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="space-y-6">
-          <div className="border-border bg-card space-y-4 rounded-xl border p-5">
-            <div className="border-border flex items-center justify-between border-b pb-2">
-              <Label className="text-foreground text-sm font-semibold">CSS Output</Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={copyOut}
-                className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
-              >
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                Copy
-              </Button>
+          <div className="space-y-6">
+            <div className="border-border bg-card space-y-4 rounded-xl border p-5">
+              <div className="border-border flex items-center justify-between border-b pb-2">
+                <Label className="text-foreground text-sm font-semibold">CSS Output</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyOut}
+                  className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
+                >
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  Copy
+                </Button>
+              </div>
+              <pre className="bg-secondary text-primary word-break-all overflow-x-auto rounded-lg p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">
+                background: {cssValue};{'\n'}
+                background: {webkitCssValue};
+              </pre>
             </div>
-            <pre className="bg-secondary text-primary word-break-all overflow-x-auto rounded-lg p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap">
-              background: {cssValue};{'\n'}
-              background: {webkitCssValue};
-            </pre>
-          </div>
 
-          <Button
-            variant="outline"
-            className="text-muted-foreground dark:hover:text-foreground w-full gap-2 hover:text-white"
-            onClick={exportPng}
-          >
-            <ImageIcon className="h-4 w-4" /> Export as PNG (1920x1080)
-          </Button>
+            <Button
+              variant="outline"
+              className="text-muted-foreground dark:hover:text-foreground w-full gap-2 hover:text-white"
+              onClick={exportPng}
+            >
+              <ImageIcon className="h-4 w-4" /> Export as PNG (1920x1080)
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </ToolLayout>
   )
 }

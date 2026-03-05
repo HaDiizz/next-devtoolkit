@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Braces, ArrowDown, ArrowUp, Check, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ToolLayout, OutputArea } from '@/components/tool-layout'
+import { tools } from '@/lib/tools'
 
 export default function JsonFormatterTool() {
+  const tool = tools.find((t) => t.id === 'json-formatter')!
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
   const [error, setError] = useState('')
@@ -45,11 +47,7 @@ export default function JsonFormatterTool() {
   }
 
   return (
-    <ToolLayout
-      title="JSON Formatter"
-      description="Prettify, minify, and validate JSON data"
-      icon={Braces}
-    >
+    <ToolLayout title={tool.name} description={tool.description} icon={tool.icon}>
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Input */}
         <div>

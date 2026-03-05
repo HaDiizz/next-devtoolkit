@@ -18,8 +18,8 @@ import {
 import { Copy, Check, RefreshCw, AlertTriangle, ShieldCheck, Loader2 } from 'lucide-react'
 import bcrypt from 'bcryptjs'
 import { argon2id } from 'hash-wasm'
-
-/* ---------- Helpers ---------- */
+import { ToolLayout } from '@/components/tool-layout'
+import { tools } from '@/lib/tools'
 
 function randomHex(bytes: number): string {
   const buf = crypto.getRandomValues(new Uint8Array(bytes))
@@ -39,10 +39,9 @@ function bufferToHex(buf: ArrayBuffer): string {
     .join('')
 }
 
-/** Rough crack-time estimation based on cost and ~10B guesses/sec for a fast GPU rig */
 function estimateCrackTime(algo: string, params: Record<string, number>): string {
   let costFactor = 1
-  const guessesPerSec = 10_000_000_000 // 10B/s baseline for plain hashes
+  const guessesPerSec = 10_000_000_000
 
   if (algo === 'pbkdf2') {
     costFactor = params.iterations ?? 100000
@@ -61,7 +60,6 @@ function estimateCrackTime(algo: string, params: Record<string, number>): string
   }
 
   const effectiveRate = guessesPerSec / costFactor
-  // Assume 8-char mixed-case+digit password = 62^8 combinations
   const combinations = Math.pow(62, 8)
   const seconds = combinations / Math.max(effectiveRate, 1)
 
@@ -92,9 +90,8 @@ function isWeak(algo: string, params: Record<string, number>): string | null {
   return null
 }
 
-/* ---------- Main Component ---------- */
-
 export default function PasswordHasher() {
+  const tool = tools.find((t) => t.id === 'password-hasher')!
   const [algo, setAlgo] = useState('pbkdf2')
   const [password, setPassword] = useState('')
   const [salt, setSalt] = useState(() => randomHex(16))
@@ -102,19 +99,15 @@ export default function PasswordHasher() {
   const [hashing, setHashing] = useState(false)
   const [error, setError] = useState('')
 
-  // PBKDF2 params
   const [pbkdf2Iterations, setPbkdf2Iterations] = useState(100000)
   const [pbkdf2Hash, setPbkdf2Hash] = useState<'SHA-256' | 'SHA-512'>('SHA-256')
 
-  // scrypt params
   const [scryptN, setScryptN] = useState(16384)
   const [scryptR, setScryptR] = useState(8)
   const [scryptP, setScryptP] = useState(1)
 
-  // bcrypt params
   const [bcryptRounds, setBcryptRounds] = useState(12)
 
-  // argon2 params
   const [argon2Time, setArgon2Time] = useState(3)
   const [argon2Mem, setArgon2Mem] = useState(65536)
   const [argon2Par, setArgon2Par] = useState(4)
@@ -193,8 +186,6 @@ export default function PasswordHasher() {
         )
         setHashOutput(bufferToHex(bits))
       } else if (algo === 'scrypt') {
-        // Use PBKDF2 as a fallback since scrypt isn't in SubtleCrypto in all browsers
-        // We'll simulate via PBKDF2 with high iteration count mapped from scrypt params
         const enc = new TextEncoder()
         const keyMaterial = await crypto.subtle.importKey(
           'raw',
@@ -204,7 +195,6 @@ export default function PasswordHasher() {
           ['deriveBits'],
         )
         const saltBuf = hexToBuffer(salt)
-        // Map scrypt cost to equivalent PBKDF2 iterations (N * r * p)
         const mappedIterations = Math.min(scryptN * scryptR * scryptP, 5000000)
         const bits = await crypto.subtle.deriveBits(
           {
@@ -228,7 +218,7 @@ export default function PasswordHasher() {
           password: password,
           salt: salt,
           iterations: argon2Time,
-          memorySize: argon2Mem, // hash-wasm uses KB natively
+          memorySize: argon2Mem,
           parallelism: argon2Par,
           hashLength: 32,
           outputType: 'encoded',
@@ -288,351 +278,346 @@ export default function PasswordHasher() {
   const weakWarning = isWeak(algo, currentParams())
 
   return (
-    <div className="space-y-6">
-      {/* Algorithm Selector */}
-      <Tabs value={algo} onValueChange={setAlgo}>
-        <TabsList className="bg-secondary grid w-full grid-cols-4">
-          <TabsTrigger value="pbkdf2" className="font-mono text-xs">
-            PBKDF2
-          </TabsTrigger>
-          <TabsTrigger value="bcrypt" className="font-mono text-xs">
-            bcrypt
-          </TabsTrigger>
-          <TabsTrigger value="argon2" className="font-mono text-xs">
-            Argon2id
-          </TabsTrigger>
-          <TabsTrigger value="scrypt" className="font-mono text-xs">
-            scrypt
-          </TabsTrigger>
-        </TabsList>
+    <ToolLayout title={tool.name} description={tool.description} icon={tool.icon}>
+      <div className="space-y-6">
+        <Tabs value={algo} onValueChange={setAlgo}>
+          <TabsList className="bg-secondary grid w-full grid-cols-4">
+            <TabsTrigger value="pbkdf2" className="font-mono text-xs">
+              PBKDF2
+            </TabsTrigger>
+            <TabsTrigger value="bcrypt" className="font-mono text-xs">
+              bcrypt
+            </TabsTrigger>
+            <TabsTrigger value="argon2" className="font-mono text-xs">
+              Argon2id
+            </TabsTrigger>
+            <TabsTrigger value="scrypt" className="font-mono text-xs">
+              scrypt
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Password Input */}
-        <div className="mt-5 space-y-4">
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs font-medium">Password</Label>
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password to hash..."
-                className="bg-secondary pr-20 font-mono text-sm"
-              />
-              <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-2">
-                <Label className="text-muted-foreground text-[10px]">Show</Label>
-                <Switch
-                  checked={showPassword}
-                  onCheckedChange={setShowPassword}
-                  className="scale-75"
+          <div className="mt-5 space-y-4">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs font-medium">Password</Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password to hash..."
+                  className="bg-secondary pr-20 font-mono text-sm"
                 />
-              </div>
-            </div>
-          </div>
-
-          {/* Salt */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs font-medium">
-              Salt (hex){algo === 'bcrypt' && ' — bcrypt generates its own salt'}
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                value={salt}
-                onChange={(e) => setSalt(e.target.value)}
-                className="bg-secondary font-mono text-xs"
-                disabled={algo === 'bcrypt'}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={regenerateSalt}
-                disabled={algo === 'bcrypt'}
-                className="text-muted-foreground dark:hover:text-foreground hover:text-white"
-              >
-                <RefreshCw className="mr-1 h-3 w-3" />
-                New
-              </Button>
-            </div>
-          </div>
-
-          {/* Algorithm-Specific Parameters */}
-          <TabsContent value="pbkdf2" className="mt-0 space-y-4">
-            <div className="border-border bg-secondary/50 space-y-4 rounded-lg border p-4">
-              <h4 className="text-foreground text-xs font-semibold">PBKDF2 Parameters</h4>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-muted-foreground text-xs">Iterations</Label>
-                  <span className="text-primary font-mono text-xs">
-                    {pbkdf2Iterations.toLocaleString()}
-                  </span>
+                <div className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center gap-2">
+                  <Label className="text-muted-foreground text-[10px]">Show</Label>
+                  <Switch
+                    checked={showPassword}
+                    onCheckedChange={setShowPassword}
+                    className="scale-75"
+                  />
                 </div>
-                <Slider
-                  value={[pbkdf2Iterations]}
-                  onValueChange={([v]) => setPbkdf2Iterations(v)}
-                  min={1000}
-                  max={1000000}
-                  step={1000}
-                />
-                <p className="text-muted-foreground text-[10px]">Recommended: 100,000+</p>
               </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground text-xs">Hash Function</Label>
-                <Select
-                  value={pbkdf2Hash}
-                  onValueChange={(v) => setPbkdf2Hash(v as 'SHA-256' | 'SHA-512')}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs font-medium">
+                Salt (hex){algo === 'bcrypt' && ' — bcrypt generates its own salt'}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  value={salt}
+                  onChange={(e) => setSalt(e.target.value)}
+                  className="bg-secondary font-mono text-xs"
+                  disabled={algo === 'bcrypt'}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={regenerateSalt}
+                  disabled={algo === 'bcrypt'}
+                  className="text-muted-foreground dark:hover:text-foreground hover:text-white"
                 >
-                  <SelectTrigger className="bg-secondary font-mono text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SHA-256">SHA-256</SelectItem>
-                    <SelectItem value="SHA-512">SHA-512</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <RefreshCw className="mr-1 h-3 w-3" />
+                  New
+                </Button>
               </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value="bcrypt" className="mt-0 space-y-4">
-            <div className="border-border bg-secondary/50 space-y-4 rounded-lg border p-4">
-              <h4 className="text-foreground text-xs font-semibold">bcrypt Parameters</h4>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-muted-foreground text-xs">Cost Factor (rounds)</Label>
-                  <span className="text-primary font-mono text-xs">{bcryptRounds}</span>
-                </div>
-                <Slider
-                  value={[bcryptRounds]}
-                  onValueChange={([v]) => setBcryptRounds(v)}
-                  min={4}
-                  max={20}
-                  step={1}
-                />
-                <p className="text-muted-foreground text-[10px]">
-                  {'2^'}
-                  {bcryptRounds}
-                  {' = '}
-                  {Math.pow(2, bcryptRounds).toLocaleString()}
-                  {' iterations. Recommended: 12+'}
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="argon2" className="mt-0 space-y-4">
-            <div className="border-border bg-secondary/50 space-y-4 rounded-lg border p-4">
-              <h4 className="text-foreground text-xs font-semibold">Argon2id Parameters</h4>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-muted-foreground text-xs">Time Cost</Label>
-                  <span className="text-primary font-mono text-xs">{argon2Time}</span>
-                </div>
-                <Slider
-                  value={[argon2Time]}
-                  onValueChange={([v]) => setArgon2Time(v)}
-                  min={1}
-                  max={16}
-                  step={1}
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-muted-foreground text-xs">Memory Cost (KB)</Label>
-                  <span className="text-primary font-mono text-xs">
-                    {argon2Mem.toLocaleString()} KB
-                  </span>
-                </div>
-                <Slider
-                  value={[argon2Mem]}
-                  onValueChange={([v]) => setArgon2Mem(v)}
-                  min={1024}
-                  max={262144}
-                  step={1024}
-                />
-                <p className="text-muted-foreground text-[10px]">
-                  = {(argon2Mem / 1024).toFixed(0)} MB. Recommended: 19 MB+
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-muted-foreground text-xs">Parallelism</Label>
-                  <span className="text-primary font-mono text-xs">{argon2Par}</span>
-                </div>
-                <Slider
-                  value={[argon2Par]}
-                  onValueChange={([v]) => setArgon2Par(v)}
-                  min={1}
-                  max={16}
-                  step={1}
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="scrypt" className="mt-0 space-y-4">
-            <div className="border-border bg-secondary/50 space-y-4 rounded-lg border p-4">
-              <h4 className="text-foreground text-xs font-semibold">scrypt Parameters</h4>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-muted-foreground text-xs">N (CPU/Memory Cost)</Label>
-                  <span className="text-primary font-mono text-xs">{scryptN.toLocaleString()}</span>
-                </div>
-                <Slider
-                  value={[Math.log2(scryptN)]}
-                  onValueChange={([v]) => setScryptN(Math.pow(2, v))}
-                  min={10}
-                  max={20}
-                  step={1}
-                />
-                <p className="text-muted-foreground text-[10px]">
-                  {'2^'}
-                  {Math.log2(scryptN)}
-                  {'. Recommended: 16384 (2^14)+'}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            <TabsContent value="pbkdf2" className="mt-0 space-y-4">
+              <div className="border-border bg-secondary/50 space-y-4 rounded-lg border p-4">
+                <h4 className="text-foreground text-xs font-semibold">PBKDF2 Parameters</h4>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-muted-foreground text-xs">r (Block Size)</Label>
-                    <span className="text-primary font-mono text-xs">{scryptR}</span>
+                    <Label className="text-muted-foreground text-xs">Iterations</Label>
+                    <span className="text-primary font-mono text-xs">
+                      {pbkdf2Iterations.toLocaleString()}
+                    </span>
                   </div>
                   <Slider
-                    value={[scryptR]}
-                    onValueChange={([v]) => setScryptR(v)}
+                    value={[pbkdf2Iterations]}
+                    onValueChange={([v]) => setPbkdf2Iterations(v)}
+                    min={1000}
+                    max={1000000}
+                    step={1000}
+                  />
+                  <p className="text-muted-foreground text-[10px]">Recommended: 100,000+</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-xs">Hash Function</Label>
+                  <Select
+                    value={pbkdf2Hash}
+                    onValueChange={(v) => setPbkdf2Hash(v as 'SHA-256' | 'SHA-512')}
+                  >
+                    <SelectTrigger className="bg-secondary font-mono text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SHA-256">SHA-256</SelectItem>
+                      <SelectItem value="SHA-512">SHA-512</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="bcrypt" className="mt-0 space-y-4">
+              <div className="border-border bg-secondary/50 space-y-4 rounded-lg border p-4">
+                <h4 className="text-foreground text-xs font-semibold">bcrypt Parameters</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-muted-foreground text-xs">Cost Factor (rounds)</Label>
+                    <span className="text-primary font-mono text-xs">{bcryptRounds}</span>
+                  </div>
+                  <Slider
+                    value={[bcryptRounds]}
+                    onValueChange={([v]) => setBcryptRounds(v)}
+                    min={4}
+                    max={20}
+                    step={1}
+                  />
+                  <p className="text-muted-foreground text-[10px]">
+                    {'2^'}
+                    {bcryptRounds}
+                    {' = '}
+                    {Math.pow(2, bcryptRounds).toLocaleString()}
+                    {' iterations. Recommended: 12+'}
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="argon2" className="mt-0 space-y-4">
+              <div className="border-border bg-secondary/50 space-y-4 rounded-lg border p-4">
+                <h4 className="text-foreground text-xs font-semibold">Argon2id Parameters</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-muted-foreground text-xs">Time Cost</Label>
+                    <span className="text-primary font-mono text-xs">{argon2Time}</span>
+                  </div>
+                  <Slider
+                    value={[argon2Time]}
+                    onValueChange={([v]) => setArgon2Time(v)}
                     min={1}
-                    max={32}
+                    max={16}
                     step={1}
                   />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-muted-foreground text-xs">p (Parallelism)</Label>
-                    <span className="text-primary font-mono text-xs">{scryptP}</span>
+                    <Label className="text-muted-foreground text-xs">Memory Cost (KB)</Label>
+                    <span className="text-primary font-mono text-xs">
+                      {argon2Mem.toLocaleString()} KB
+                    </span>
                   </div>
                   <Slider
-                    value={[scryptP]}
-                    onValueChange={([v]) => setScryptP(v)}
+                    value={[argon2Mem]}
+                    onValueChange={([v]) => setArgon2Mem(v)}
+                    min={1024}
+                    max={262144}
+                    step={1024}
+                  />
+                  <p className="text-muted-foreground text-[10px]">
+                    = {(argon2Mem / 1024).toFixed(0)} MB. Recommended: 19 MB+
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-muted-foreground text-xs">Parallelism</Label>
+                    <span className="text-primary font-mono text-xs">{argon2Par}</span>
+                  </div>
+                  <Slider
+                    value={[argon2Par]}
+                    onValueChange={([v]) => setArgon2Par(v)}
                     min={1}
                     max={16}
                     step={1}
                   />
                 </div>
               </div>
-              <p className="text-muted-foreground text-[10px] italic">
-                Note: Browser SubtleCrypto does not natively support scrypt. This tool uses PBKDF2
-                with mapped cost (N*r*p iterations) as a client-side approximation. For true scrypt,
-                use Node.js.
-              </p>
-            </div>
-          </TabsContent>
-        </div>
-      </Tabs>
+            </TabsContent>
 
-      {/* Security Info Bar */}
-      <div className="border-border bg-secondary/50 flex flex-col gap-3 rounded-lg border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="text-primary h-4 w-4" />
-          <span className="text-muted-foreground text-xs">
-            Est. crack time (8-char alphanumeric):
-          </span>
-          <span className="text-primary font-mono text-xs font-semibold">{crackTime}</span>
+            <TabsContent value="scrypt" className="mt-0 space-y-4">
+              <div className="border-border bg-secondary/50 space-y-4 rounded-lg border p-4">
+                <h4 className="text-foreground text-xs font-semibold">scrypt Parameters</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-muted-foreground text-xs">N (CPU/Memory Cost)</Label>
+                    <span className="text-primary font-mono text-xs">
+                      {scryptN.toLocaleString()}
+                    </span>
+                  </div>
+                  <Slider
+                    value={[Math.log2(scryptN)]}
+                    onValueChange={([v]) => setScryptN(Math.pow(2, v))}
+                    min={10}
+                    max={20}
+                    step={1}
+                  />
+                  <p className="text-muted-foreground text-[10px]">
+                    {'2^'}
+                    {Math.log2(scryptN)}
+                    {'. Recommended: 16384 (2^14)+'}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-muted-foreground text-xs">r (Block Size)</Label>
+                      <span className="text-primary font-mono text-xs">{scryptR}</span>
+                    </div>
+                    <Slider
+                      value={[scryptR]}
+                      onValueChange={([v]) => setScryptR(v)}
+                      min={1}
+                      max={32}
+                      step={1}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-muted-foreground text-xs">p (Parallelism)</Label>
+                      <span className="text-primary font-mono text-xs">{scryptP}</span>
+                    </div>
+                    <Slider
+                      value={[scryptP]}
+                      onValueChange={([v]) => setScryptP(v)}
+                      min={1}
+                      max={16}
+                      step={1}
+                    />
+                  </div>
+                </div>
+                <p className="text-muted-foreground text-[10px] italic">
+                  Note: Browser SubtleCrypto does not natively support scrypt. This tool uses PBKDF2
+                  with mapped cost (N*r*p iterations) as a client-side approximation. For true
+                  scrypt, use Node.js.
+                </p>
+              </div>
+            </TabsContent>
+          </div>
+        </Tabs>
+
+        <div className="border-border bg-secondary/50 flex flex-col gap-3 rounded-lg border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="text-primary h-4 w-4" />
+            <span className="text-muted-foreground text-xs">
+              Est. crack time (8-char alphanumeric):
+            </span>
+            <span className="text-primary font-mono text-xs font-semibold">{crackTime}</span>
+          </div>
+          {weakWarning && (
+            <div className="flex items-center gap-1.5 text-amber-400">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              <span className="text-[11px] leading-tight">{weakWarning}</span>
+            </div>
+          )}
         </div>
-        {weakWarning && (
-          <div className="flex items-center gap-1.5 text-amber-400">
-            <AlertTriangle className="h-3.5 w-3.5" />
-            <span className="text-[11px] leading-tight">{weakWarning}</span>
+
+        <Button
+          onClick={() => {
+            void handleHash()
+          }}
+          className="w-full"
+          disabled={!password || hashing}
+        >
+          {hashing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Hashing...
+            </>
+          ) : (
+            'Hash Password'
+          )}
+        </Button>
+
+        {error && (
+          <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-xs">
+            {error}
+          </div>
+        )}
+
+        {hashOutput && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-muted-foreground text-xs font-medium">Hash Output</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copy(hashOutput)}
+                className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
+              >
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copied ? 'Copied' : 'Copy'}
+              </Button>
+            </div>
+            <div className="border-border bg-secondary rounded-lg border p-4">
+              <pre className="text-foreground font-mono text-xs leading-relaxed break-all whitespace-pre-wrap">
+                {hashOutput}
+              </pre>
+            </div>
+            <p className="text-muted-foreground text-[10px]">
+              Algorithm: <span className="text-foreground font-mono">{algo.toUpperCase()}</span>
+              {algo !== 'bcrypt' && (
+                <>
+                  {' '}
+                  | Salt: <span className="text-foreground font-mono">{salt.slice(0, 16)}...</span>
+                </>
+              )}
+            </p>
+
+            <div className="border-border bg-secondary/30 mt-4 space-y-4 rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-foreground text-xs font-semibold">Verify Hash</Label>
+              </div>
+              <div className="text-muted-foreground mb-2 text-xs">
+                Verify if the current password matches this generated hash.
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-muted-foreground dark:hover:text-foreground h-8 w-full text-xs hover:text-white"
+                onClick={() => {
+                  void handleVerifyMatch()
+                }}
+              >
+                Verify Match
+              </Button>
+              {verifyResult && (
+                <div
+                  className={`rounded p-2 font-mono text-xs ${
+                    verifyResult.includes('MATCH (Valid)')
+                      ? 'bg-emerald-500/10 text-emerald-500'
+                      : verifyResult.includes('NO MATCH')
+                        ? 'bg-destructive/10 text-destructive'
+                        : 'bg-secondary text-muted-foreground'
+                  }`}
+                >
+                  {verifyResult}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
-
-      {/* Hash Button */}
-      <Button
-        onClick={() => {
-          void handleHash()
-        }}
-        className="w-full"
-        disabled={!password || hashing}
-      >
-        {hashing ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Hashing...
-          </>
-        ) : (
-          'Hash Password'
-        )}
-      </Button>
-
-      {/* Error */}
-      {error && (
-        <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-xs">
-          {error}
-        </div>
-      )}
-
-      {/* Output */}
-      {hashOutput && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-muted-foreground text-xs font-medium">Hash Output</Label>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => copy(hashOutput)}
-              className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
-            >
-              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              {copied ? 'Copied' : 'Copy'}
-            </Button>
-          </div>
-          <div className="border-border bg-secondary rounded-lg border p-4">
-            <pre className="text-foreground font-mono text-xs leading-relaxed break-all whitespace-pre-wrap">
-              {hashOutput}
-            </pre>
-          </div>
-          <p className="text-muted-foreground text-[10px]">
-            Algorithm: <span className="text-foreground font-mono">{algo.toUpperCase()}</span>
-            {algo !== 'bcrypt' && (
-              <>
-                {' '}
-                | Salt: <span className="text-foreground font-mono">{salt.slice(0, 16)}...</span>
-              </>
-            )}
-          </p>
-
-          {/* Verification Box */}
-          <div className="border-border bg-secondary/30 mt-4 space-y-4 rounded-lg border p-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-foreground text-xs font-semibold">Verify Hash</Label>
-            </div>
-            <div className="text-muted-foreground mb-2 text-xs">
-              Verify if the current password matches this generated hash.
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-muted-foreground dark:hover:text-foreground h-8 w-full text-xs hover:text-white"
-              onClick={() => {
-                void handleVerifyMatch()
-              }}
-            >
-              Verify Match
-            </Button>
-            {verifyResult && (
-              <div
-                className={`rounded p-2 font-mono text-xs ${
-                  verifyResult.includes('MATCH (Valid)')
-                    ? 'bg-emerald-500/10 text-emerald-500'
-                    : verifyResult.includes('NO MATCH')
-                      ? 'bg-destructive/10 text-destructive'
-                      : 'bg-secondary text-muted-foreground'
-                }`}
-              >
-                {verifyResult}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+    </ToolLayout>
   )
 }

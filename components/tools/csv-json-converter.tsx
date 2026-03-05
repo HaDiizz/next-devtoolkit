@@ -22,6 +22,8 @@ import {
   Download,
 } from 'lucide-react'
 import Papa from 'papaparse'
+import { ToolLayout } from '@/components/tool-layout'
+import { tools } from '@/lib/tools'
 
 type Mode = 'csv2json' | 'json2csv'
 type Delimiter = 'auto' | ',' | ';' | '\t' | '|'
@@ -105,6 +107,7 @@ function convertJsonToCsv(
 }
 
 export default function CsvJsonConverter() {
+  const tool = tools.find((t) => t.id === 'csv-json-converter')!
   const [mode, setMode] = useState<Mode>('csv2json')
   const [inputVal, setInputVal] = useState('')
   const [outputVal, setOutputVal] = useState('')
@@ -164,137 +167,139 @@ export default function CsvJsonConverter() {
   const outputLabel = mode === 'csv2json' ? 'JSON' : 'CSV'
 
   return (
-    <div className="space-y-6">
-      <div className="border-border bg-card flex flex-col items-center justify-between gap-4 rounded-xl border p-4 sm:flex-row">
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-              mode === 'csv2json'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-muted-foreground'
-            }`}
-          >
-            <FileSpreadsheet className="h-4 w-4" /> CSV
+    <ToolLayout title={tool.name} description={tool.description} icon={tool.icon}>
+      <div className="space-y-6">
+        <div className="border-border bg-card flex flex-col items-center justify-between gap-4 rounded-xl border p-4 sm:flex-row">
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                mode === 'csv2json'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground'
+              }`}
+            >
+              <FileSpreadsheet className="h-4 w-4" /> CSV
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMode}
+              className="hover:bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-foreground h-8 w-8 rounded-full"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+            </Button>
+            <div
+              className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                mode === 'json2csv'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground'
+              }`}
+            >
+              <FileJson className="h-4 w-4" /> JSON
+            </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleMode}
-            className="hover:bg-secondary text-muted-foreground dark:hover:text-foreground hover:text-foreground h-8 w-8 rounded-full"
-          >
-            <ArrowRightLeft className="h-4 w-4" />
-          </Button>
-          <div
-            className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-              mode === 'json2csv'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-muted-foreground'
-            }`}
-          >
-            <FileJson className="h-4 w-4" /> JSON
-          </div>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <Switch checked={hasHeader} onCheckedChange={setHasHeader} id="header-toggle" />
-            <Label htmlFor="header-toggle" className="text-muted-foreground text-xs">
-              Headers
-            </Label>
-          </div>
-          {mode === 'csv2json' && (
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center space-x-2">
-              <Switch
-                checked={dynamicTyping}
-                onCheckedChange={setDynamicTyping}
-                id="dynamic-toggle"
-              />
-              <Label htmlFor="dynamic-toggle" className="text-muted-foreground text-xs">
-                Parse Num/Bool
+              <Switch checked={hasHeader} onCheckedChange={setHasHeader} id="header-toggle" />
+              <Label htmlFor="header-toggle" className="text-muted-foreground text-xs">
+                Headers
               </Label>
             </div>
-          )}
-          <div className="flex items-center space-x-2">
-            <Label className="text-muted-foreground text-xs">Delimiter:</Label>
-            <Select value={delimiter} onValueChange={(v) => setDelimiter(v as Delimiter)}>
-              <SelectTrigger className="bg-secondary h-8 w-[110px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {DELIMITERS.map((d) => (
-                  <SelectItem key={d.value} value={d.value} className="text-xs">
-                    {d.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {errorMsg && (
-        <div className="border-destructive/40 bg-destructive/10 text-destructive flex items-center gap-2 rounded-lg border px-4 py-3 text-xs">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          {errorMsg}
-        </div>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="flex h-full flex-col space-y-2">
-          <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-            Input ({inputLabel})
-          </Label>
-          <textarea
-            value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
-            className="border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:ring-ring min-h-[400px] w-full flex-1 resize-none rounded-lg border p-4 font-mono text-xs leading-relaxed focus:ring-1 focus:outline-none"
-            placeholder={PLACEHOLDERS[mode]}
-          />
-        </div>
-
-        <div className="flex h-full flex-col space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-              Output ({outputLabel})
-              {outputVal && (
-                <span className="text-muted-foreground ml-2 font-normal normal-case">
-                  ({stats.rows} rows, {stats.cols} columns)
-                </span>
-              )}
-            </Label>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopy}
-                disabled={!outputVal}
-                className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
-              >
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                Copy
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleDownload}
-                disabled={!outputVal}
-                className="h-7 gap-1 text-xs"
-              >
-                <Download className="h-3 w-3" />
-                Download
-              </Button>
-            </div>
-          </div>
-          <div className="border-border bg-card relative min-h-[400px] flex-1 overflow-auto rounded-lg border p-4">
-            {!outputVal && !errorMsg && (
-              <div className="text-muted-foreground/50 absolute inset-0 flex items-center justify-center text-xs italic">
-                Awaiting valid input...
+            {mode === 'csv2json' && (
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={dynamicTyping}
+                  onCheckedChange={setDynamicTyping}
+                  id="dynamic-toggle"
+                />
+                <Label htmlFor="dynamic-toggle" className="text-muted-foreground text-xs">
+                  Parse Num/Bool
+                </Label>
               </div>
             )}
-            <pre className="text-foreground font-mono text-xs leading-relaxed">{outputVal}</pre>
+            <div className="flex items-center space-x-2">
+              <Label className="text-muted-foreground text-xs">Delimiter:</Label>
+              <Select value={delimiter} onValueChange={(v) => setDelimiter(v as Delimiter)}>
+                <SelectTrigger className="bg-secondary h-8 w-[110px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DELIMITERS.map((d) => (
+                    <SelectItem key={d.value} value={d.value} className="text-xs">
+                      {d.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {errorMsg && (
+          <div className="border-destructive/40 bg-destructive/10 text-destructive flex items-center gap-2 rounded-lg border px-4 py-3 text-xs">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            {errorMsg}
+          </div>
+        )}
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="flex h-full flex-col space-y-2">
+            <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+              Input ({inputLabel})
+            </Label>
+            <textarea
+              value={inputVal}
+              onChange={(e) => setInputVal(e.target.value)}
+              className="border-border bg-secondary text-foreground placeholder:text-muted-foreground focus:ring-ring min-h-[400px] w-full flex-1 resize-none rounded-lg border p-4 font-mono text-xs leading-relaxed focus:ring-1 focus:outline-none"
+              placeholder={PLACEHOLDERS[mode]}
+            />
+          </div>
+
+          <div className="flex h-full flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                Output ({outputLabel})
+                {outputVal && (
+                  <span className="text-muted-foreground ml-2 font-normal normal-case">
+                    ({stats.rows} rows, {stats.cols} columns)
+                  </span>
+                )}
+              </Label>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopy}
+                  disabled={!outputVal}
+                  className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
+                >
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  Copy
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleDownload}
+                  disabled={!outputVal}
+                  className="h-7 gap-1 text-xs"
+                >
+                  <Download className="h-3 w-3" />
+                  Download
+                </Button>
+              </div>
+            </div>
+            <div className="border-border bg-card relative min-h-[400px] flex-1 overflow-auto rounded-lg border p-4">
+              {!outputVal && !errorMsg && (
+                <div className="text-muted-foreground/50 absolute inset-0 flex items-center justify-center text-xs italic">
+                  Awaiting valid input...
+                </div>
+              )}
+              <pre className="text-foreground font-mono text-xs leading-relaxed">{outputVal}</pre>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </ToolLayout>
   )
 }

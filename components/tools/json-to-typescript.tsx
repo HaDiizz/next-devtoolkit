@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Braces } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToolLayout, OutputArea } from '@/components/tool-layout'
+import { tools } from '@/lib/tools'
 
 function jsonToTsInterface(json: unknown, name: string, indent = 0): string {
   const pad = '  '.repeat(indent)
@@ -67,6 +67,7 @@ function capitalize(s: string): string {
 }
 
 export default function JsonToTypescriptTool() {
+  const tool = tools.find((t) => t.id === 'json-to-typescript')!
   const [input, setInput] = useState('')
   const [rootName, setRootName] = useState('Root')
   const [output, setOutput] = useState('')
@@ -84,11 +85,7 @@ export default function JsonToTypescriptTool() {
   }
 
   return (
-    <ToolLayout
-      title="JSON to TypeScript"
-      description="Generate TypeScript interfaces from JSON data"
-      icon={Braces}
-    >
+    <ToolLayout title={tool.name} description={tool.description} icon={tool.icon}>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="flex flex-col gap-3">
           <div>

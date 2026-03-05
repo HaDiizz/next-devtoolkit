@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Braces } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ToolLayout, OutputArea } from '@/components/tool-layout'
+import { tools } from '@/lib/tools'
 
 function jsonToSchema(value: unknown): Record<string, unknown> {
   if (value === null) return { type: 'null' }
@@ -36,6 +36,7 @@ function jsonToSchema(value: unknown): Record<string, unknown> {
 }
 
 export default function JsonToSchemaTool() {
+  const tool = tools.find((t) => t.id === 'json-to-schema')!
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
   const [error, setError] = useState('')
@@ -56,11 +57,7 @@ export default function JsonToSchemaTool() {
   }
 
   return (
-    <ToolLayout
-      title="JSON to Schema"
-      description="Generate JSON Schema from sample JSON data"
-      icon={Braces}
-    >
+    <ToolLayout title={tool.name} description={tool.description} icon={tool.icon}>
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="flex flex-col gap-3">
           <div>

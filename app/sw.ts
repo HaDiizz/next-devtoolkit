@@ -1,7 +1,8 @@
 /// <reference lib="webworker" />
+
 import { defaultCache } from '@serwist/turbopack/worker'
 import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist'
-import { Serwist, CacheFirst } from 'serwist'
+import { Serwist, CacheFirst, NetworkFirst } from 'serwist'
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -11,7 +12,7 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope
 
-const STATIC_ASSETS = ['/', '/~offline', '/manifest.webmanifest', '/favicon.ico']
+const CACHE_VERSION = (self.__SW_MANIFEST?.[0] as PrecacheEntry | undefined)?.revision ?? 'dev'
 
 const STATIC_PATTERNS = [
   /^\/_next\/static\//,
@@ -23,17 +24,28 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
+
   runtimeCaching: [
+    {
+      matcher: ({ request }) => request.mode === 'navigate',
+      handler: new NetworkFirst({
+        cacheName: `pages-${CACHE_VERSION}`,
+        networkTimeoutSeconds: 3,
+      }),
+    },
+
     {
       matcher({ request }) {
         return STATIC_PATTERNS.some((pattern) => pattern.test(new URL(request.url).pathname))
       },
       handler: new CacheFirst({
-        cacheName: 'devtoolkit-static-v2',
+        cacheName: `static-${CACHE_VERSION}`,
       }),
     },
+
     ...defaultCache,
   ],
+
   fallbacks: {
     entries: [
       {
@@ -48,8 +60,14 @@ const serwist = new Serwist({
 
 serwist.addEventListeners()
 
-self.addEventListener('install', (event: ExtendableEvent) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.open('devtoolkit-precache-v2').then((cache) => cache.addAll(STATIC_ASSETS)),
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys.filter((key) => !key.includes(CACHE_VERSION)).map((key) => caches.delete(key)),
+        ),
+      ),
   )
 })

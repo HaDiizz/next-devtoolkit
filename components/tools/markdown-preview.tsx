@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ToolLayout } from '@/components/tool-layout'
+import { tools } from '@/lib/tools'
 import { useCopyToClipboard } from '@/hooks/use-copy'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -55,6 +56,7 @@ function hello() {
 `
 
 export default function MarkdownPreview() {
+  const tool = tools.find((t) => t.id === 'markdown-preview')!
   const [markdown, setMarkdown] = useState(DEFAULT_MARKDOWN)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const copy = useCopyToClipboard()
@@ -108,11 +110,7 @@ export default function MarkdownPreview() {
   ]
 
   return (
-    <ToolLayout
-      title="Markdown Preview"
-      description="Type or paste Markdown to see real-time preview with GFM support"
-      icon={Edit3}
-    >
+    <ToolLayout title={tool.name} description={tool.description} icon={tool.icon}>
       <div className="flex flex-col gap-4">
         <div className="border-border flex flex-wrap items-center justify-between gap-4 border-b pb-4">
           <div className="flex flex-wrap items-center gap-1">

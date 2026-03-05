@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Braces, ArrowLeftRight } from 'lucide-react'
+import { ArrowLeftRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ToolLayout } from '@/components/tool-layout'
+import { tools } from '@/lib/tools'
 
 interface DiffEntry {
   path: string
@@ -68,6 +69,7 @@ function deepDiff(a: unknown, b: unknown, path = ''): DiffEntry[] {
 }
 
 export default function JsonDiffTool() {
+  const tool = tools.find((t) => t.id === 'json-diff')!
   const [leftInput, setLeftInput] = useState('')
   const [rightInput, setRightInput] = useState('')
   const [diffs, setDiffs] = useState<DiffEntry[] | null>(null)
@@ -86,11 +88,7 @@ export default function JsonDiffTool() {
   }
 
   return (
-    <ToolLayout
-      title="JSON Compare"
-      description="Compare two JSON objects and see a detailed diff"
-      icon={Braces}
-    >
+    <ToolLayout title={tool.name} description={tool.description} icon={tool.icon}>
       <div className="grid gap-4 lg:grid-cols-2">
         <div>
           <p className="text-muted-foreground mb-1.5 text-xs font-medium">Left JSON (Original)</p>
