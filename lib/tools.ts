@@ -287,6 +287,13 @@ export const tools: Tool[] = [
     icon: SearchCheck,
     category: 'SEO',
   },
+  {
+    id: 'ip-address-tool',
+    name: 'IP Address & Geolocation',
+    description: 'Get your current public IP address and view network geolocation information',
+    icon: Globe,
+    category: 'Network',
+  },
 ]
 
 export const categories = [...new Set(tools.map((t) => t.category))]

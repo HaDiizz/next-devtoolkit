@@ -42,6 +42,8 @@ const toolComponents: Record<string, React.ComponentType> = {
   'thai-cid-generator': dynamic(() => import('@/components/tools/thai-cid-generator')),
   // SEO
   'seo-tool': dynamic(() => import('@/components/tools/seo-tool')),
+  // Network
+  'ip-address-tool': dynamic(() => import('@/components/tools/ip-address-tool')),
 }
 
 export function getToolComponent(id: string): React.ComponentType | null {
