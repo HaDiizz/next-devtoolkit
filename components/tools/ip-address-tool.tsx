@@ -66,17 +66,16 @@ export default function IpAddressTool() {
           <div className="absolute top-4 right-4 flex gap-2">
             <Button
               variant="outline"
-              size="sm"
               onClick={() => handleCopy(data?.ip || '')}
               disabled={loading || !data?.ip || data?.ip === 'Unknown IP'}
-              className="border-border bg-secondary/50 text-muted-foreground gap-1.5 hover:text-white"
+              className="border-border bg-secondary/50 text-muted-foreground flex h-9 items-center justify-center gap-1.5 p-0 hover:text-white sm:w-auto sm:px-3"
             >
               {copied ? (
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}
-              {copied ? 'Copied' : 'Copy'}
+              <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
             </Button>
             <Button
               variant="outline"

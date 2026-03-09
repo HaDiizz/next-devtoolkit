@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Binary, Upload, ImageIcon, X, Download } from 'lucide-react'
+import { Binary, Upload, ImageIcon, X, Download, Copy, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { ToolLayout, OutputArea } from '@/components/tool-layout'
@@ -16,15 +16,13 @@ export default function Base64ConverterTool() {
   const [decodeOutput, setDecodeOutput] = useState('')
   const [error, setError] = useState('')
 
-  // Image to Base64
   const [imageBase64, setImageBase64] = useState('')
   const [imagePreview, setImagePreview] = useState('')
   const [imageName, setImageName] = useState('')
   const imageInputRef = useRef<HTMLInputElement>(null)
-
-  // Base64 to Image preview
   const [decodeImagePreview, setDecodeImagePreview] = useState('')
   const [isDecodeImage, setIsDecodeImage] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const copy = useCopyToClipboard()
 
@@ -45,14 +43,12 @@ export default function Base64ConverterTool() {
       setDecodeOutput(decodeURIComponent(escape(decoded)))
       setError('')
     } catch {
-      // Could be binary / image data
       tryDecodeAsImage()
     }
   }
 
   const tryDecodeAsImage = () => {
     const raw = decodeInput.trim()
-    // If it has a data URI prefix
     if (raw.startsWith('data:image')) {
       setDecodeImagePreview(raw)
       setIsDecodeImage(true)
@@ -60,7 +56,6 @@ export default function Base64ConverterTool() {
       setError('')
       return
     }
-    // Try wrapping raw base64 as image
     const testUrl = `data:image/png;base64,${raw}`
     const img = new window.Image()
     img.crossOrigin = 'anonymous'
@@ -149,7 +144,6 @@ export default function Base64ConverterTool() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Encode Text */}
         <TabsContent value="encode-text" className="mt-4">
           <div className="flex flex-col gap-4">
             <div>
@@ -172,7 +166,6 @@ export default function Base64ConverterTool() {
           </div>
         </TabsContent>
 
-        {/* Decode (text or image auto-detection) */}
         <TabsContent value="decode-text" className="mt-4">
           <div className="flex flex-col gap-4">
             <div>
@@ -228,7 +221,6 @@ export default function Base64ConverterTool() {
           </div>
         </TabsContent>
 
-        {/* Image to Base64 */}
         <TabsContent value="image-to-base64" className="mt-4">
           <div className="flex flex-col gap-4">
             <input
@@ -292,14 +284,21 @@ export default function Base64ConverterTool() {
                   <div className="mb-1.5 flex items-center justify-between">
                     <p className="text-muted-foreground text-xs font-medium">Base64 Data URI</p>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="text-muted-foreground dark:hover:text-foreground h-7 gap-1.5 text-xs hover:text-white"
+                      className="border-border bg-secondary/50 text-muted-foreground flex h-9 items-center justify-center gap-1.5 p-0 hover:text-white sm:w-auto sm:px-3"
                       onClick={() => {
                         void copy(imageBase64)
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
                       }}
                     >
-                      Copy
+                      {copied ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
                     </Button>
                   </div>
                   <textarea

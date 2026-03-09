@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Copy, Check, ShieldCheck, AlertCircle } from 'lucide-react'
+import { Copy, Check, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react'
 import { ToolLayout } from '@/components/tool-layout'
 import { tools } from '@/lib/tools'
 
@@ -142,14 +142,18 @@ export default function HmacGenerator() {
                 <div className="flex items-center justify-between">
                   <Label className="text-muted-foreground text-xs font-medium">Hex Digest</Label>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={copyHex}
                     disabled={!hexDigest}
-                    className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
+                    className="border-border bg-secondary/50 text-muted-foreground flex h-9 items-center justify-center gap-1.5 p-0 hover:text-white sm:w-auto sm:px-3"
                   >
-                    {copiedHex ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    Copy
+                    {copiedHex ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">{copiedHex ? 'Copied' : 'Copy'}</span>
                   </Button>
                 </div>
                 <div className="border-border bg-secondary/50 min-h-[44px] rounded-md border p-3">
@@ -165,14 +169,18 @@ export default function HmacGenerator() {
                 <div className="flex items-center justify-between">
                   <Label className="text-muted-foreground text-xs font-medium">Base64 Digest</Label>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={copyB64}
                     disabled={!base64Digest}
-                    className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
+                    className="border-border bg-secondary/50 text-muted-foreground flex h-9 items-center justify-center gap-1.5 p-0 hover:text-white sm:w-auto sm:px-3"
                   >
-                    {copiedB64 ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    Copy
+                    {copiedB64 ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">{copiedB64 ? 'Copied' : 'Copy'}</span>
                   </Button>
                 </div>
                 <div className="border-border bg-secondary/50 min-h-[44px] rounded-md border p-3">

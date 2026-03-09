@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowRightLeft, Copy, Check } from 'lucide-react'
+import { ArrowRightLeft, Copy, CheckCircle2 } from 'lucide-react'
 import { ToolLayout } from '@/components/tool-layout'
 import { tools } from '@/lib/tools'
 
@@ -138,12 +138,15 @@ export default function TextDiffTool() {
             </div>
             <Button
               variant="outline"
-              size="sm"
               onClick={copyPatch}
-              className="text-muted-foreground dark:hover:text-foreground ml-2 h-8 gap-1 text-xs hover:text-white"
+              className="border-border bg-secondary/50 text-muted-foreground ml-2 flex h-9 items-center justify-center gap-1.5 p-0 hover:text-white sm:w-auto sm:px-3"
             >
-              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              Copy Patch
+              {copied ? (
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy Patch'}</span>
             </Button>
           </div>
         </div>

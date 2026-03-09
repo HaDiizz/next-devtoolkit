@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select'
 import {
   Copy,
-  Check,
+  CheckCircle2,
   ArrowRightLeft,
   FileJson,
   FileSpreadsheet,
@@ -269,13 +269,16 @@ export default function CsvJsonConverter() {
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  size="sm"
                   onClick={handleCopy}
                   disabled={!outputVal}
-                  className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
+                  className="border-border bg-secondary/50 text-muted-foreground flex h-9 items-center justify-center gap-1.5 p-0 hover:text-white sm:w-auto sm:px-3"
                 >
-                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  Copy
+                  {copied ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
                 </Button>
                 <Button
                   variant="default"

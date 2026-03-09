@@ -5,7 +5,7 @@ import { useCopyToClipboard } from '@/hooks/use-copy'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Copy, Check, Settings2 } from 'lucide-react'
+import { Copy, CheckCircle2, Settings2 } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { ToolLayout } from '@/components/tool-layout'
 import { tools } from '@/lib/tools'
@@ -227,14 +227,14 @@ export default function CssUnitConverter() {
                     <div className="text-foreground font-mono text-lg">{conv.value}</div>
                   </div>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
-                    className="text-muted-foreground dark:hover:text-foreground h-8 w-8 shrink-0 hover:text-white"
+                    className="border-border bg-secondary/50 text-muted-foreground flex h-9 w-9 items-center justify-center p-0 hover:text-white"
                     onClick={() => handleCopy(`${conv.value}${conv.unit}`, i)}
                     title={`Copy ${conv.value}${conv.unit}`}
                   >
                     {copiedIndex === i ? (
-                      <Check className="h-4 w-4 text-emerald-500" />
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}

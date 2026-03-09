@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Copy, Check, ShieldAlert, ShieldCheck, KeyRound, Play } from 'lucide-react'
+import { Copy, CheckCircle2, ShieldAlert, ShieldCheck, KeyRound, Play } from 'lucide-react'
 import { ToolLayout } from '@/components/tool-layout'
 import { tools } from '@/lib/tools'
 
@@ -186,14 +186,18 @@ export default function JwtBuilder() {
                 <div className="border-border bg-card flex h-[450px] flex-col overflow-hidden rounded-xl border">
                   <div className="border-border bg-secondary/50 flex items-center justify-end border-b p-2">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={copyOut}
                       disabled={!generatedJwt}
-                      className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
+                      className="border-border bg-secondary/50 text-muted-foreground flex h-9 items-center justify-center gap-1.5 p-0 hover:text-white sm:w-auto sm:px-3"
                     >
-                      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      Copy
+                      {copied ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
                     </Button>
                   </div>
                   <div className="relative flex-1 overflow-auto p-5">

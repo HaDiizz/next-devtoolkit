@@ -1,7 +1,7 @@
 'use client'
 
-import { ReactNode } from 'react'
-import { Copy } from 'lucide-react'
+import { ReactNode, useState } from 'react'
+import { Copy, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCopyToClipboard } from '@/hooks/use-copy'
 import { FavoriteToggle } from '@/components/favorite-toggle'
@@ -46,6 +46,7 @@ export function OutputBox({
   mono?: boolean
 }) {
   const copy = useCopyToClipboard()
+  const [copied, setCopied] = useState(false)
   return (
     <div className="group relative">
       {label && <p className="text-muted-foreground mb-1.5 text-xs font-medium">{label}</p>}
@@ -56,15 +57,21 @@ export function OutputBox({
           {value || '—'}
         </span>
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
-          className="text-muted-foreground dark:hover:text-foreground h-8 w-8 shrink-0 hover:text-white"
+          className="border-border bg-secondary/50 text-muted-foreground flex h-9 w-9 items-center justify-center p-0 hover:text-white"
           onClick={() => {
             void copy(value)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
           }}
           disabled={!value}
         >
-          <Copy className="h-4 w-4" />
+          {copied ? (
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
           <span className="sr-only">Copy</span>
         </Button>
       </div>
@@ -82,21 +89,28 @@ export function OutputArea({
   rows?: number
 }) {
   const copy = useCopyToClipboard()
+  const [copied, setCopied] = useState(false)
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between">
         {label && <p className="text-muted-foreground text-xs font-medium">{label}</p>}
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-muted-foreground dark:hover:text-foreground h-7 gap-1.5 text-xs hover:text-white"
+          className="border-border bg-secondary/50 text-muted-foreground flex h-9 items-center justify-center gap-1.5 p-0 hover:text-white sm:w-auto sm:px-3"
           onClick={() => {
             void copy(value)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
           }}
           disabled={!value}
         >
-          <Copy className="h-3.5 w-3.5" />
-          Copy
+          {copied ? (
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
+          <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
         </Button>
       </div>
       <textarea

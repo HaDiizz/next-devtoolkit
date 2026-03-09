@@ -8,7 +8,6 @@ import {
   AlertCircle,
   Download,
   Copy,
-  Check,
   Image as ImageIcon,
   FileJson,
   Loader2,
@@ -696,15 +695,19 @@ export default function SeoTool() {
               </div>
               <div className="flex gap-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     void handleCopyManifest()
                   }}
-                  className="text-muted-foreground dark:hover:text-foreground h-7 gap-1 text-xs hover:text-white"
+                  className="border-border bg-secondary/50 text-muted-foreground flex h-9 items-center justify-center gap-1.5 p-0 hover:text-white sm:w-auto sm:px-3"
                 >
-                  {manifestCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  {manifestCopied ? 'Copied' : 'Copy'}
+                  {manifestCopied ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">{manifestCopied ? 'Copied' : 'Copy'}</span>
                 </Button>
                 <Button
                   variant="ghost"

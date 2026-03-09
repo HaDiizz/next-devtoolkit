@@ -21,6 +21,7 @@ import {
   Edit3,
   Undo2,
   Trash2,
+  CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ToolLayout } from '@/components/tool-layout'
@@ -59,7 +60,17 @@ export default function MarkdownPreview() {
   const tool = tools.find((t) => t.id === 'markdown-preview')!
   const [markdown, setMarkdown] = useState(DEFAULT_MARKDOWN)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const copy = useCopyToClipboard()
+  const copyToClipboard = useCopyToClipboard()
+  const [copied, setCopied] = useState(false)
+
+  const copy = useCallback(
+    (text: string) => {
+      void copyToClipboard(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    },
+    [copyToClipboard],
+  )
 
   const insertText = useCallback(
     (before: string, after: string = '') => {
@@ -150,14 +161,17 @@ export default function MarkdownPreview() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
-              className="bg-secondary/30 hover:bg-secondary/80 text-muted-foreground hover:text-foreground h-8 gap-2 text-xs"
               onClick={() => {
                 void copy(markdown)
               }}
+              className="border-border bg-secondary/50 text-muted-foreground flex h-9 items-center justify-center gap-1.5 p-0 hover:text-white sm:w-auto sm:px-3"
             >
-              <Copy className="h-3.5 w-3.5" />
-              Copy Markdown
+              {copied ? (
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy Markdown'}</span>
             </Button>
             <Button
               variant="outline"
