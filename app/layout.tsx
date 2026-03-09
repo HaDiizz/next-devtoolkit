@@ -33,6 +33,7 @@ const _lora = Lora({ subsets: ['latin'], variable: '--font-lora' })
 const _oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald' })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://next-devtoolkit.vercel.app'),
   title: {
     default: 'DevToolkit',
     template: '%s | DevToolkit',
@@ -172,9 +173,11 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    nocache: true,
     googleBot: {
       index: true,
       follow: true,
+      noarchive: true,
       'max-video-preview': -1,
       'max-image-preview': 'large',
       'max-snippet': -1,
@@ -187,16 +190,10 @@ export const metadata: Metadata = {
         sizes: 'any',
       },
       {
-        url: '/icon-32x32.png',
-        type: 'image/png',
-        sizes: '32x32',
-      },
-      {
         url: '/icon.svg',
         type: 'image/svg+xml',
       },
     ],
-    apple: '/apple-icon.png',
   },
   verification: {
     google: 'WvdrIDson5RmCJVjOZ9EIeAFupaWff_9-BG-r3yknnk',
