@@ -117,16 +117,23 @@ export default function HomePage() {
               <h2 className="text-foreground mb-2 text-2xl font-bold">{category}</h2>
               <p className="text-muted-foreground mb-8 text-base">
                 {category === 'Generators' &&
-                  'Create unique identifiers, passwords, hashes, encryption, secure hashing, and placeholder text'}
-                {category === 'Converters' &&
-                  'Transform data, images, timestamps, and encodings between formats'}
-                {category === 'JSON Tools' && 'Format, convert, compare, and transform JSON data'}
-                {category === 'Encode / Decode' &&
-                  'Encode, decode, and inspect URLs, JWTs, and more'}
-                {category === 'String & Regex' &&
-                  'Case conversion, text analysis, and regex pattern testing'}
-                {category === 'Date / Time' && 'Parse cron expressions and work with timezones'}
-                {category === 'Data' && 'Generate mock data and test IDs'}
+                  'Create unique identifiers, mock data, placeholder text, and QR codes'}
+                {category === 'Security & Crypto' &&
+                  'Secure your data with password generation, hashing, and encryption algorithms'}
+                {category === 'Encode & Decode' &&
+                  'Encode, decode, and transform data between formats like Base64, URL, JWT, and number bases'}
+                {category === 'JSON Tools' &&
+                  'Format, validate, compare, and convert your JSON data'}
+                {category === 'Web & CSS' &&
+                  'Enhance your frontend with CSS generators, color converters, and SEO tools'}
+                {category === 'Text & String' &&
+                  'Analyze, modify, and test strings, regex patterns, and markdown files'}
+                {category === 'Date & Time' &&
+                  'Work seamlessly with timestamps, timezones, and cron expressions'}
+                {category === 'Media & Files' &&
+                  'Convert and compress images and files efficiently'}
+                {category === 'Network Tools' &&
+                  'Inspect and troubleshoot your network with IP and geolocation tools'}
               </p>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {tools
