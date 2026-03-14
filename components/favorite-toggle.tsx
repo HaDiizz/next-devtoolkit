@@ -24,7 +24,9 @@ export function FavoriteToggle() {
           ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 hover:text-yellow-600 dark:hover:bg-yellow-500/20'
           : 'text-muted-foreground hover:bg-secondary/80 hover:text-foreground dark:hover:bg-secondary/80 dark:hover:text-foreground'
       }`}
-      onClick={() => toggleFavorite(toolId)}
+      onClick={() => {
+        void toggleFavorite(toolId)
+      }}
       title={active ? 'Remove from favorites' : 'Add to favorites'}
     >
       <Star className={`h-5 w-5 ${active ? 'fill-current' : ''}`} />

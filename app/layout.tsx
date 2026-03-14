@@ -18,6 +18,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/theme-provider'
 import { FontProvider } from '@/components/font-provider'
 import RegisterSW from '@/components/register-sw'
+import OnlineStatus from '@/components/online-status'
 import './globals.css'
 
 const _geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
@@ -226,6 +227,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FontProvider>
+            <OnlineStatus />
             {children}
             <Toaster />
             <Analytics />

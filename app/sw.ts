@@ -43,6 +43,14 @@ const serwist = new Serwist({
       }),
     },
 
+    {
+      matcher: ({ url }) => url.pathname.startsWith('/api/'),
+      handler: new NetworkFirst({
+        cacheName: 'api-cache',
+        networkTimeoutSeconds: 5,
+      }),
+    },
+
     ...defaultCache,
   ],
 
@@ -60,7 +68,7 @@ const serwist = new Serwist({
 
 serwist.addEventListeners()
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', (event: ExtendableEvent) => {
   event.waitUntil(
     caches
       .keys()

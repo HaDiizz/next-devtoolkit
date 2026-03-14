@@ -1,55 +1,47 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-
-const STORAGE_KEY = 'devtoolkit-favorites'
+import { getFavorites, addFavorite, removeFavorite } from '@/lib/db'
 
 export function useFavorites() {
   const [favorites, setFavorites] = useState<string[]>([])
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        setFavorites(JSON.parse(stored))
-      } catch {
-        localStorage.removeItem(STORAGE_KEY)
-      }
-    }
+  const loadFavorites = useCallback(async () => {
+    const stored = await getFavorites()
+    setFavorites(stored.map((f) => f.id))
   }, [])
 
-  const toggleFavorite = useCallback((id: string) => {
-    let next: string[] = []
+  useEffect(() => {
+    void loadFavorites()
+  }, [loadFavorites])
+
+  const toggleFavorite = useCallback(async (id: string) => {
     setFavorites((prev) => {
-      next = prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]
-      return next
+      const isFav = prev.includes(id)
+      if (isFav) {
+        void removeFavorite(id)
+        return prev.filter((fid) => fid !== id)
+      } else {
+        void addFavorite(id)
+        return [...prev, id]
+      }
     })
 
-    setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      window.dispatchEvent(new Event('favorites-updated'))
-    }, 0)
+    window.dispatchEvent(new Event('favorites-updated'))
   }, [])
 
   const isFavorite = useCallback((id: string) => favorites.includes(id), [favorites])
 
   useEffect(() => {
     const handleUpdate = () => {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        try {
-          setFavorites(JSON.parse(stored))
-        } catch {}
-      }
+      void loadFavorites()
     }
 
     window.addEventListener('favorites-updated', handleUpdate)
-    window.addEventListener('storage', handleUpdate)
     return () => {
       window.removeEventListener('favorites-updated', handleUpdate)
-      window.removeEventListener('storage', handleUpdate)
     }
-  }, [])
+  }, [loadFavorites])
 
   return { favorites, toggleFavorite, isFavorite }
 }
