@@ -20,11 +20,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${tool.name} | DevToolkit`,
       description: tool.description,
       type: 'article',
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: `${tool.name} Preview`,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${tool.name} | DevToolkit`,
       description: tool.description,
+      images: ['/og-image.png'],
     },
   }
 }
