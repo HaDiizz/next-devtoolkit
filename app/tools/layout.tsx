@@ -9,7 +9,7 @@ export default function ToolsLayout({ children }: { children: React.ReactNode })
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="bg-background sticky top-0 z-[9999] flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 lg:hidden">
+        <header className="bg-background sticky top-0 z-[9998] flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 lg:hidden">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
@@ -20,7 +20,7 @@ export default function ToolsLayout({ children }: { children: React.ReactNode })
             <AnimatedThemeToggler />
           </div>
         </header>
-        <header className="bg-background sticky top-0 z-[9999] hidden h-14 shrink-0 items-center justify-end gap-2 border-b px-6 lg:flex">
+        <header className="bg-background sticky top-0 z-[9998] hidden h-14 shrink-0 items-center justify-end gap-2 border-b px-6 lg:flex">
           <FontSwitcher />
           <AnimatedThemeToggler />
         </header>

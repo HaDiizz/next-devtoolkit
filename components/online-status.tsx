@@ -10,7 +10,9 @@ export default function OnlineStatus() {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
-    setIsOnline(navigator.onLine)
+    const online = navigator.onLine
+    setIsOnline(online)
+    if (!online) setShow(true)
 
     const handleOnline = () => {
       setIsOnline(true)
@@ -39,7 +41,7 @@ export default function OnlineStatus() {
           initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -100, opacity: 0 }}
-          className="fixed top-4 left-1/2 z-[100] w-[90%] max-w-md -translate-x-1/2"
+          className="fixed top-4 left-1/2 z-[9999] w-[90%] max-w-md -translate-x-1/2"
         >
           <div
             className={`flex items-center gap-3 rounded-2xl border p-4 shadow-2xl backdrop-blur-xl ${
