@@ -16,6 +16,7 @@ export default function OnlineStatus() {
 
     const handleOnline = () => {
       setIsOnline(true)
+      setShow(true)
       void syncData()
       setTimeout(() => setShow(false), 3000)
     }
