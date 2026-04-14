@@ -25,7 +25,7 @@ export function ToolLayout({
             <Icon className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-foreground text-2xl font-bold tracking-tight">{title}</h2>
+            <h1 className="text-foreground text-2xl font-bold tracking-tight">{title}</h1>
             <p className="text-muted-foreground mt-1 text-sm">{description}</p>
           </div>
         </div>

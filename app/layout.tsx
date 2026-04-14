@@ -168,7 +168,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'DevToolkit | Developer Utilities',
-    description: 'Professional Utilities for Modern Developers.',
+    description:
+      'Professional-grade developer utilities and SDK tools for modern web development. Securely generate IDs, hash passwords, decode JWTs, and more directly in your browser.',
     images: ['/og-image.png'],
   },
   robots: {
@@ -186,6 +187,9 @@ export const metadata: Metadata = {
   },
   verification: {
     google: 'WvdrIDson5RmCJVjOZ9EIeAFupaWff_9-BG-r3yknnk',
+  },
+  alternates: {
+    canonical: '/',
   },
 }
 

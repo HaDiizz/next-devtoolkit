@@ -46,161 +46,184 @@ export const tools: Tool[] = [
   {
     id: 'uuid-generator',
     name: 'ID Generator',
-    description: 'Generate UUID v4, CUID, NanoID, ULID and more unique identifiers',
+    description:
+      'Professional unique identifier generator. Quickly create secure UUID v4, NanoID, CUID, ULID, and other industry-standard IDs for your development and testing needs.',
     icon: Fingerprint,
     category: 'Generators',
   },
   {
     id: 'mock-data-generator',
     name: 'Mock Data Generator',
-    description: 'Generate random user profiles, addresses, and structured JSON data',
+    description:
+      'Create realistic mock data for your applications. Generate random user profiles, structured addresses, and consistent JSON data sets for prototyping and automated testing.',
     icon: UserRound,
     category: 'Generators',
   },
   {
     id: 'thai-cid-generator',
     name: 'Thai CID Generator',
-    description: 'Generate valid random Thai Citizen ID numbers for testing',
+    description:
+      'Generate valid random Thai Citizen ID numbers (CID) for testing and development. Ensure your application handles Thai identity verification flows correctly with compliant mock data.',
     icon: CreditCard,
     category: 'Generators',
   },
   {
     id: 'lorem-ipsum',
     name: 'Lorem Ipsum',
-    description: 'Generate placeholder text in paragraphs, sentences, or words',
+    description:
+      'Standard placeholder text generator for designers and developers. Create custom Lorem Ipsum paragraphs, sentences, or words to fill your layouts and test typography.',
     icon: Type,
     category: 'Generators',
   },
   {
     id: 'qr-code-generator',
     name: 'QR Code Generator',
-    description: 'Create customizable QR codes for URLs, WiFi, vCards, and more',
+    description:
+      'Fully customizable QR code generator. Create high-quality QR codes for URLs, WiFi credentials, vCards, and plain text with adjustable error correction and styling options.',
     icon: QrCode,
     category: 'Generators',
   },
   {
     id: 'password-generator',
     name: 'Password Generator',
-    description: 'Create strong passwords with custom rules and character sets',
+    description:
+      'Advanced secure password generator. Create strong, cryptographically secure passwords with custom lengths, character sets, and inclusion rules to protect your accounts and data.',
     icon: KeyRound,
     category: 'Security & Crypto',
   },
   {
     id: 'password-hasher',
     name: 'Password Hasher',
-    description: 'Securely hash passwords with bcrypt, Argon2, scrypt, or PBKDF2',
+    description:
+      'Securely hash and verify passwords using industry-standard algorithms. Support for bcrypt, Argon2, scrypt, and PBKDF2 with customizable cost factors and salt configurations.',
     icon: ShieldCheck,
     category: 'Security & Crypto',
   },
   {
     id: 'hash-generator',
     name: 'Hash Generator',
-    description: 'Generate MD5, SHA-1, SHA-256, SHA-512 hashes from text',
+    description:
+      'Comprehensive text hashing tool. Quickly generate MD5, SHA-1, SHA-256, and SHA-512 hashes with real-time updates for data integrity verification and cryptographic purposes.',
     icon: Shield,
     category: 'Security & Crypto',
   },
   {
     id: 'hmac-generator',
     name: 'HMAC Generator',
-    description: 'Generate HMAC with custom secret keys and hash algorithms',
+    description:
+      'Keyed-hash message authentication code (HMAC) generator. Compute secure HMACs using custom secret keys and a variety of standard hash algorithms for secure data verification.',
     icon: Fingerprint,
     category: 'Security & Crypto',
   },
   {
     id: 'encryption-tool',
     name: 'Encryption / Decryption',
-    description: 'Encrypt and decrypt text with AES-GCM or AES-CBC using a secret key',
+    description:
+      'Powerful browser-based encryption and decryption. Securely transform text using AES-GCM or AES-CBC algorithms with your own secret keys for maximum data privacy and security.',
     icon: Lock,
     category: 'Security & Crypto',
   },
   {
     id: 'base64-converter',
     name: 'Base64 Encoder',
-    description: 'Encode/decode Base64 strings and images with live preview',
+    description:
+      'Efficient Base64 encoder and decoder. Quickly convert text or images to Base64 format and back with live previews, perfect for embedding assets or data URI generation.',
     icon: Binary,
     category: 'Encode & Decode',
   },
   {
     id: 'url-encoder',
     name: 'URL Encoder / Decoder',
-    description: 'Encode and decode URL components and query strings',
+    description:
+      'Professional URL encoding and decoding tool. Effortlessly transform URL components, query parameters, and special characters into web-safe formats and back with instant results.',
     icon: FileCode,
     category: 'Encode & Decode',
   },
   {
     id: 'jwt-decoder',
     name: 'JWT Decoder',
-    description: 'Decode JWTs and inspect header, payload, and claims in detail',
+    description:
+      'Developer-focused JWT decoder and inspector. Securely decode JSON Web Tokens directly in your browser to inspect header details, payload claims, and signature information.',
     icon: KeyRound,
     category: 'Encode & Decode',
   },
   {
     id: 'jwt-builder',
     name: 'JWT Builder / Signer',
-    description: 'Build and sign JSON Web Tokens with custom payload and claims',
+    description:
+      'Secure JSON Web Token (JWT) builder. Create and sign your own JWTs with custom payloads, headers, and secret keys for testing authentication flows and token verification.',
     icon: Key,
     category: 'Encode & Decode',
   },
   {
     id: 'number-base-converter',
     name: 'Number Base Converter',
-    description: 'Convert between binary, octal, decimal, and hexadecimal',
+    description:
+      'Versatile number base converter for developers. Seamlessly switch between binary, octal, decimal, and hexadecimal representations with support for large numbers and instant updates.',
     icon: Hash,
     category: 'Encode & Decode',
   },
   {
     id: 'json-formatter',
     name: 'JSON Formatter',
-    description: 'Prettify, minify, and validate JSON data with syntax highlighting',
+    description:
+      'Advanced JSON formatter and validator. Cleanly prettify, minify, and repair JSON data with real-time syntax highlighting for better readability and debugging.',
     icon: Braces,
     category: 'JSON Tools',
   },
   {
     id: 'json-to-typescript',
     name: 'JSON to TypeScript',
-    description: 'Generate TypeScript interfaces from JSON data automatically',
+    description:
+      'Instant JSON to TypeScript interface generator. Paste your JSON data to automatically create accurate, strictly-typed TypeScript definitions for your development projects.',
     icon: FileJson,
     category: 'JSON Tools',
   },
   {
     id: 'json-to-schema',
     name: 'JSON to Schema',
-    description: 'Generate JSON Schema (Draft-07) from sample JSON data',
+    description:
+      'Comprehensive JSON Schema generator. Quickly create JSON Schema (Draft-07) definitions from your sample JSON data to use for validation and API documentation.',
     icon: FileCog,
     category: 'JSON Tools',
   },
   {
     id: 'json-diff',
     name: 'JSON Compare',
-    description: 'Compare two JSON objects side-by-side and see a detailed diff',
+    description:
+      'Professional JSON comparison tool. Visually compare two JSON objects side-by-side to identify additions, removals, and modifications with detailed diff highlighting.',
     icon: GitCompare,
     category: 'JSON Tools',
   },
   {
     id: 'csv-json-converter',
     name: 'CSV ↔ JSON Converter',
-    description: 'Convert data between CSV and JSON formats with advanced options',
+    description:
+      'Flexible CSV and JSON data converter. Seamlessly transform data between CSV and JSON formats with advanced options for delimiters, headers, and nested objects.',
     icon: ArrowRightLeft,
     category: 'JSON Tools',
   },
   {
     id: 'css-gradient-generator',
     name: 'CSS Gradient Generator',
-    description: 'Create beautiful linear, radial, and conic CSS gradients visually',
+    description:
+      'Interactive CSS gradient builder. Design stunning linear, radial, and conic gradients with a visual editor, and automatically generate clean, browser-compatible CSS code.',
     icon: Paintbrush,
     category: 'Web & CSS',
   },
   {
     id: 'css-unit-converter',
     name: 'CSS Unit Converter',
-    description: 'Convert CSS units (px, rem, em, vw, vh) with custom context',
+    description:
+      'Precision CSS unit converter for modern web design. Easily convert between px, rem, em, vw, and vh with customizable root font-size context to ensure responsive layout accuracy.',
     icon: Ruler,
     category: 'Web & CSS',
   },
   {
     id: 'color-converter',
     name: 'Color Converter',
-    description: 'Convert between HEX, RGB, HSL, and other color formats',
+    description:
+      'Comprehensive color format converter. Seamlessly transform color codes between HEX, RGB, HSL, CMYK, and CSS Color Names with real-time visual previews and contrast checking.',
     icon: Palette,
     category: 'Web & CSS',
   },
@@ -208,84 +231,95 @@ export const tools: Tool[] = [
     id: 'seo-tool',
     name: 'SEO Toolkit',
     description:
-      'Preview OG cards, score SEO, check best practices, generate manifest.json, and export favicon assets',
+      'All-in-one SEO and meta tool. Preview OpenGraph cards, analyze SEO best practices, generate manifest.json files, and export optimized favicon assets for your web applications.',
     icon: SearchCheck,
     category: 'Web & CSS',
   },
   {
     id: 'string-utilities',
     name: 'String Utilities',
-    description: 'Case conversion, character count, reverse, and text manipulation',
+    description:
+      'Complete suite of string manipulation tools. Includes case conversion, character counting, text reversing, and whitespace removal to simplify common text processing tasks.',
     icon: Shuffle,
     category: 'Text & String',
   },
   {
     id: 'regex-tester',
     name: 'Regex Tester',
-    description: 'Test regular expressions with real-time highlighting and match details',
+    description:
+      'Real-time regular expression tester and debugger. Validate your regex patterns with instant syntax highlighting, detailed match explanations, and live text testing.',
     icon: Search,
     category: 'Text & String',
   },
   {
     id: 'text-diff-tool',
     name: 'Text Diff Tool',
-    description: 'Compare two text blocks and highlight additions, removals, and changes',
+    description:
+      'Advanced text comparison and diff tool. Quickly compare two blocks of text to identify and highlight differences, additions, and removals with a clear side-by-side view.',
     icon: Diff,
     category: 'Text & String',
   },
   {
     id: 'markdown-preview',
     name: 'Markdown Preview',
-    description: 'Real-time Markdown editor with live preview and GitHub Flavored Markdown support',
+    description:
+      'Feature-rich Markdown editor with instant live preview. Full support for GitHub Flavored Markdown (GFM), tables, task lists, and code blocks for documentation and content creators.',
     icon: FileCode,
     category: 'Text & String',
   },
   {
     id: 'line-message-formatter',
     name: 'LINE Message Formatter',
-    description: 'Convert Markdown to LINE-compatible text format',
+    description:
+      'Professional LINE message formatter. Easily convert Markdown text into a perfectly compatible format for LINE Messenger, ensuring your messages look great on any mobile device.',
     icon: MessageCircle,
     category: 'Text & String',
   },
   {
     id: 'timestamp-converter',
     name: 'Timestamp Converter',
-    description: 'Convert between Unix timestamps and human-readable dates',
+    description:
+      'Universal Unix timestamp and date converter. Seamlessly transform between Unix epochs (seconds and milliseconds) and human-readable dates in local or UTC time formats.',
     icon: Clock,
     category: 'Date & Time',
   },
   {
     id: 'timezone-converter',
     name: 'Timezone Converter',
-    description: 'Convert times between different timezones around the world',
+    description:
+      'Accurate global timezone converter and world clock. Effortlessly schedule meetings or convert times across any world timezone with support for daylight savings and local offsets.',
     icon: Globe,
     category: 'Date & Time',
   },
   {
     id: 'cron-reader',
     name: 'Cron Expression Reader',
-    description: 'Parse cron expressions into human-readable text with next run predictions',
+    description:
+      'Intuitive cron expression parser and scheduler. Translate complex crontab syntax into clear, human-readable text and view the next scheduled execution times for your jobs.',
     icon: Timer,
     category: 'Date & Time',
   },
   {
     id: 'image-converter',
     name: 'Image Converter',
-    description: 'Convert images between PNG, JPEG, WebP, and BMP formats',
+    description:
+      'High-speed browser-based image converter. Effortlessly transform images between PNG, JPEG, WebP, and BMP formats without uploading any data to a server for maximum privacy.',
     icon: ImageIcon,
     category: 'Media & Files',
   },
   {
     id: 'file-compressor',
     name: 'File Compressor',
-    description: 'Optimize image, PDF, and generic files with advanced compression techniques',
+    description:
+      'Intelligent file and image compression tool. Optimize PNG, JPEG, PDF, and other generic files for faster web loading while maintaining high visual quality and metadata control.',
     icon: Zap,
     category: 'Media & Files',
   },
   {
     id: 'ip-address-tool',
     name: 'IP Address & Geolocation',
-    description: 'Get your current public IP address and view network geolocation information',
+    description:
+      'Comprehensive IP address and geolocation tool. Instantaneously find your public IPv4/IPv6 address and view detailed network information including ISP, location, and ASN details.',
     icon: Network,
     category: 'Network Tools',
   },

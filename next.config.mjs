@@ -7,7 +7,6 @@ const withSerwist = withSerwistInit({
   reloadOnOnline: true,
 })
 
-/** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
@@ -15,7 +14,25 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  poweredByHeader: false,
   turbopack: {},
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 export default withSerwist(nextConfig)
