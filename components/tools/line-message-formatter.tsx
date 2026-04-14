@@ -613,20 +613,26 @@ export default function LineMessageFormatter() {
             </div>
           )}
 
-          <div className="mx-auto flex w-full max-w-lg flex-col gap-2 pt-4">
-            <Label className="text-muted-foreground text-center text-sm font-semibold">
-              Live Preview
-            </Label>
-            <div
-              style={{
-                backgroundColor: 'var(--line-bubble-bg)',
-                borderColor: 'var(--line-bubble-border)',
-                color: 'var(--line-bubble-text)',
-              }}
-              className="relative min-h-[60px] rounded-2xl rounded-tr-sm border p-4 text-[15px] leading-relaxed break-words whitespace-pre-wrap shadow-sm"
-            >
-              {output || 'Your LINE message preview will appear here...'}
-            </div>
+          <div className="w-full pt-4">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="live-preview" className="border-border">
+                <AccordionTrigger className="text-foreground text-sm font-semibold transition-colors hover:no-underline">
+                  Live Preview
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div
+                    style={{
+                      backgroundColor: 'var(--line-bubble-bg)',
+                      borderColor: 'var(--line-bubble-border)',
+                      color: 'var(--line-bubble-text)',
+                    }}
+                    className="relative min-h-[60px] rounded-2xl rounded-tr-sm border p-4 text-[15px] leading-relaxed break-words whitespace-pre-wrap shadow-sm"
+                  >
+                    {output || 'Your LINE message preview will appear here...'}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
 
           <div className="pt-8">
