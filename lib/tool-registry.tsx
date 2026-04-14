@@ -29,6 +29,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   'regex-tester': dynamic(() => import('@/components/tools/regex-tester')),
   'text-diff-tool': dynamic(() => import('@/components/tools/text-diff-tool')),
   'markdown-preview': dynamic(() => import('@/components/tools/markdown-preview')),
+  'line-message-formatter': dynamic(() => import('@/components/tools/line-message-formatter')),
   'timestamp-converter': dynamic(() => import('@/components/tools/timestamp-converter')),
   'timezone-converter': dynamic(() => import('@/components/tools/timezone-converter')),
   'cron-reader': dynamic(() => import('@/components/tools/cron-reader')),

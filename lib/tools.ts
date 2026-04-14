@@ -30,6 +30,7 @@ import {
   SearchCheck,
   Zap,
   Network,
+  MessageCircle,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -237,6 +238,13 @@ export const tools: Tool[] = [
     name: 'Markdown Preview',
     description: 'Real-time Markdown editor with live preview and GitHub Flavored Markdown support',
     icon: FileCode,
+    category: 'Text & String',
+  },
+  {
+    id: 'line-message-formatter',
+    name: 'LINE Message Formatter',
+    description: 'Convert Markdown to LINE-compatible text format',
+    icon: MessageCircle,
     category: 'Text & String',
   },
   {

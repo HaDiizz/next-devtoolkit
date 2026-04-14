@@ -214,7 +214,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body
         className={`${_geistMono.variable} ${_geist.variable} ${_ebGaramond.variable} ${_inter.variable} ${_roboto.variable} ${_playfair.variable} ${_montserrat.variable} ${_openSans.variable} ${_poppins.variable} ${_lora.variable} ${_oswald.variable} font-sans antialiased`}
         suppressHydrationWarning
