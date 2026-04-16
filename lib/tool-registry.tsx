@@ -36,6 +36,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   'image-converter': dynamic(() => import('@/components/tools/image-converter')),
   'file-compressor': dynamic(() => import('@/components/tools/file-compressor')),
   'ip-address-tool': dynamic(() => import('@/components/tools/ip-address-tool')),
+  'sql-analyzer': dynamic(() => import('@/components/tools/sql-analyzer')),
 }
 
 export function getToolComponent(id: string): React.ComponentType | null {

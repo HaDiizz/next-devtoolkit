@@ -31,6 +31,7 @@ import {
   Zap,
   Network,
   MessageCircle,
+  Database,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -321,7 +322,15 @@ export const tools: Tool[] = [
     description:
       'Comprehensive IP address and geolocation tool. Instantaneously find your public IPv4/IPv6 address and view detailed network information including ISP, location, and ASN details.',
     icon: Network,
-    category: 'Network Tools',
+    category: 'Network',
+  },
+  {
+    id: 'sql-analyzer',
+    name: 'SQL Analyzer',
+    description:
+      'Powerful SQL analysis and formatting toolkit. Visualize query structure, analyze table dependencies, calculate complexity, and detect anti-patterns in your SQL queries.',
+    icon: Database,
+    category: 'Database',
   },
 ]
 
