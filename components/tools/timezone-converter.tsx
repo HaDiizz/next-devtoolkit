@@ -147,7 +147,6 @@ export default function TimezoneConverterTool() {
                     if (newDate) setDate(newDate)
                     setCalendarOpen(false)
                   }}
-                  initialFocus
                 />
               </PopoverContent>
             </Popover>
