@@ -21,6 +21,8 @@ import {
   Scan,
   Check,
   AlertTriangle,
+  Eye,
+  X,
 } from 'lucide-react'
 import JSZip from 'jszip'
 import QRCode from 'qrcode'
@@ -54,15 +56,19 @@ interface FileItem {
   size: number
 }
 
-function compressSdp(sdpObj: RTCSessionDescriptionInit): string {
+async function compressSdp(sdpObj: RTCSessionDescriptionInit): Promise<string> {
   const json = JSON.stringify(sdpObj)
-  const bytes = new TextEncoder().encode(json)
+  const stream = new Blob([json]).stream()
+  const compressedStream = stream.pipeThrough(new CompressionStream('gzip'))
+  const response = new Response(compressedStream)
+  const buffer = await response.arrayBuffer()
+  const bytes = new Uint8Array(buffer)
   let binary = ''
   bytes.forEach((b) => (binary += String.fromCharCode(b)))
   return btoa(binary)
 }
 
-function decompressSdp(base64Str: string): RTCSessionDescriptionInit {
+async function decompressSdp(base64Str: string): Promise<RTCSessionDescriptionInit> {
   if (base64Str.length > MAX_SDP_LENGTH) {
     throw new Error('SDP payload too large')
   }
@@ -71,7 +77,10 @@ function decompressSdp(base64Str: string): RTCSessionDescriptionInit {
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i)
   }
-  const json = new TextDecoder().decode(bytes)
+  const stream = new Blob([bytes]).stream()
+  const decompressedStream = stream.pipeThrough(new DecompressionStream('gzip'))
+  const response = new Response(decompressedStream)
+  const json = await response.text()
   const parsed = JSON.parse(json) as unknown
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('Invalid SDP payload format')
@@ -109,6 +118,38 @@ function sanitizePath(filename: string): string {
     .split(/[/\\]/)
     .filter((part) => part.length > 0 && part !== '.' && part !== '..')
     .join('/')
+}
+
+function getMimeType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase() || ''
+  const mimeMap: Record<string, string> = {
+    pdf: 'application/pdf',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    webp: 'image/webp',
+    svg: 'image/svg+xml',
+    bmp: 'image/bmp',
+    ico: 'image/x-icon',
+    mp4: 'video/mp4',
+    webm: 'video/webm',
+    ogg: 'video/ogg',
+    mov: 'video/quicktime',
+    mp3: 'audio/mpeg',
+    wav: 'audio/wav',
+    aac: 'audio/aac',
+    txt: 'text/plain',
+    html: 'text/html',
+    css: 'text/css',
+    js: 'application/javascript',
+    ts: 'application/typescript',
+    json: 'application/json',
+    md: 'text/markdown',
+    xml: 'application/xml',
+    zip: 'application/zip',
+  }
+  return mimeMap[ext] || 'application/octet-stream'
 }
 
 function formatSize(bytes: number): string {
@@ -170,6 +211,13 @@ export default function SecureShareTool() {
   const [showScanner, setShowScanner] = useState(false)
   const [scannerError, setScannerError] = useState('')
   const [scanResult, setScanResult] = useState('')
+  const [previewFile, setPreviewFile] = useState<{
+    name: string
+    blob: Blob
+    textContent?: string
+    type: string
+  } | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string>('')
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
@@ -180,6 +228,7 @@ export default function SecureShareTool() {
   const offerQrInputRef = useRef<HTMLInputElement>(null)
   const answerQrInputRef = useRef<HTMLInputElement>(null)
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
+  const dataChannelRef = useRef<RTCDataChannel | null>(null)
 
   const transferStartRef = useRef<number>(0)
   const receivedBytesRef = useRef<number>(0)
@@ -190,6 +239,10 @@ export default function SecureShareTool() {
   const isCancelledRef = useRef<boolean>(false)
 
   const closePeerConnection = useCallback(() => {
+    if (dataChannelRef.current) {
+      dataChannelRef.current.close()
+      dataChannelRef.current = null
+    }
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close()
       peerConnectionRef.current = null
@@ -317,6 +370,93 @@ export default function SecureShareTool() {
       else drawGraph(receiverCanvasRef)
     }
   }, [transferProgress, connectionState, activeTab, drawGraph])
+
+  useEffect(() => {
+    if (previewFile && ['image', 'video', 'audio', 'pdf'].includes(previewFile.type)) {
+      const url = URL.createObjectURL(previewFile.blob)
+      setPreviewUrl(url)
+      return () => {
+        URL.revokeObjectURL(url)
+      }
+    } else {
+      setPreviewUrl('')
+    }
+  }, [previewFile])
+
+  const getPreviewType = (filename: string, blob: Blob) => {
+    const ext = filename.split('.').pop()?.toLowerCase() || ''
+    const mime = blob.type.toLowerCase()
+
+    if (
+      mime.startsWith('image/') ||
+      ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)
+    ) {
+      return 'image'
+    }
+    if (mime.startsWith('video/') || ['mp4', 'webm', 'ogg', 'mov'].includes(ext)) {
+      return 'video'
+    }
+    if (mime.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'aac'].includes(ext)) {
+      return 'audio'
+    }
+    if (ext === 'pdf' || mime === 'application/pdf') {
+      return 'pdf'
+    }
+    if (
+      mime.startsWith('text/') ||
+      [
+        'txt',
+        'js',
+        'jsx',
+        'ts',
+        'tsx',
+        'html',
+        'css',
+        'json',
+        'md',
+        'xml',
+        'yml',
+        'yaml',
+        'ini',
+        'conf',
+        'sql',
+        'csv',
+        'sh',
+        'py',
+        'go',
+        'rs',
+        'java',
+        'c',
+        'cpp',
+      ].includes(ext)
+    ) {
+      return 'text'
+    }
+    return 'unsupported'
+  }
+
+  const handlePreview = async (file: { name: string; blob: Blob }) => {
+    const type = getPreviewType(file.name, file.blob)
+    if (type === 'text') {
+      try {
+        const text = await file.blob.text()
+        const truncatedText =
+          text.length > 100000
+            ? text.substring(0, 100000) + '\n\n...[Truncated - File too large to preview]...'
+            : text
+        setPreviewFile({ name: file.name, blob: file.blob, textContent: truncatedText, type })
+      } catch {
+        setPreviewFile({
+          name: file.name,
+          blob: file.blob,
+          textContent: 'Failed to read text file content.',
+          type,
+        })
+      }
+    } else {
+      setPreviewFile({ name: file.name, blob: file.blob, type })
+    }
+  }
 
   const handleQrScanSuccess = useCallback((rawValue: string) => {
     const parsed = parseQrPayload(rawValue)
@@ -494,6 +634,7 @@ export default function SecureShareTool() {
       peerConnectionRef.current = pc
 
       const dc = pc.createDataChannel('file-transfer', { ordered: true })
+      dataChannelRef.current = dc
       dc.binaryType = 'arraybuffer'
       dc.bufferedAmountLowThreshold = 524288
 
@@ -507,11 +648,12 @@ export default function SecureShareTool() {
       setLoadingProgress('Gathering connection paths...')
 
       let codeSet = false
-      const finalizeCode = () => {
+      const finalizeCode = async () => {
         if (codeSet) return
         codeSet = true
         if (pc.localDescription) {
-          setInitiatorCode(compressSdp(pc.localDescription))
+          const comp = await compressSdp(pc.localDescription)
+          setInitiatorCode(comp)
           setLoading(false)
           setLoadingProgress('')
           toast.success('Connection request code ready!')
@@ -519,10 +661,12 @@ export default function SecureShareTool() {
       }
 
       pc.onicecandidate = (event) => {
-        if (event.candidate === null) finalizeCode()
+        if (event.candidate === null) void finalizeCode()
       }
 
-      setTimeout(finalizeCode, 5000)
+      setTimeout(() => {
+        void finalizeCode()
+      }, 5000)
 
       dc.onopen = () => {
         toast.success('Direct secure tunnel established!')
@@ -536,9 +680,61 @@ export default function SecureShareTool() {
 
       dc.onclose = () => {
         setConnectionState('disconnected')
+        toast.info('Connection closed by recipient.')
+        resetSenderState()
       }
     } catch {
       toast.error('Initialization failed.')
+      setLoading(false)
+      setLoadingProgress('')
+    }
+  }
+
+  const sendFilesDirectly = async () => {
+    if (files.length === 0) {
+      toast.error('Please select at least one file or folder.')
+      return
+    }
+    const dc = dataChannelRef.current
+    if (!dc || dc.readyState !== 'open') {
+      toast.error('Data channel is not open. Please reconnect.')
+      return
+    }
+
+    setLoading(true)
+    setLoadingProgress('Packaging new files...')
+    try {
+      const totalQueueBytes = files.reduce((acc, f) => acc + f.size, 0)
+      if (totalQueueBytes > MAX_QUEUE_BYTES) {
+        toast.error('Total file size exceeds the 4GB limit.')
+        setLoading(false)
+        setLoadingProgress('')
+        return
+      }
+
+      const zip = new JSZip()
+      files.forEach((item) => {
+        zip.file(item.path, item.file)
+      })
+      const zipBlob = await zip.generateAsync({ type: 'blob' })
+      const zipBuffer = await zipBlob.arrayBuffer()
+
+      setLoadingProgress('Calculating SHA-256 hash...')
+      const zipHash = await computeSha256(zipBuffer)
+      setSenderHash(zipHash)
+
+      setLoadingProgress('Sending files...')
+      setLoading(false)
+      setLoadingProgress('')
+
+      void startFileTransfer(
+        zipBuffer,
+        files.length === 1 ? files[0].file.name + '.zip' : 'Archive.zip',
+        dc,
+        zipHash,
+      )
+    } catch {
+      toast.error('Packaging failed.')
       setLoading(false)
       setLoadingProgress('')
     }
@@ -549,7 +745,7 @@ export default function SecureShareTool() {
     if (!recipientResponse.trim() || !pc) return
 
     try {
-      const answer = decompressSdp(recipientResponse.trim())
+      const answer = await decompressSdp(recipientResponse.trim())
       await pc.setRemoteDescription(answer)
       toast.success('Handshake response processed. Connecting...')
     } catch {
@@ -642,6 +838,7 @@ export default function SecureShareTool() {
         try {
           dc.send(JSON.stringify({ type: 'done' }))
           toast.success('File transfer completed!')
+          setFiles([])
         } catch {
           toast.error('Failed to finalize transfer.')
         }
@@ -652,7 +849,10 @@ export default function SecureShareTool() {
       setConnectionState('disconnected')
       if (sentBytesRef.current < totalSize && !isCancelledRef.current) {
         toast.error('Connection dropped. Transfer interrupted.')
+      } else {
+        toast.info('Connection closed by recipient.')
       }
+      resetSenderState()
     }
 
     sendNextChunk()
@@ -680,7 +880,7 @@ export default function SecureShareTool() {
     setLoading(true)
     setLoadingProgress('Parsing connection request...')
     try {
-      const offer = decompressSdp(recipientRequest.trim())
+      const offer = await decompressSdp(recipientRequest.trim())
       const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
       peerConnectionRef.current = pc
 
@@ -695,11 +895,12 @@ export default function SecureShareTool() {
       setLoadingProgress('Generating connection paths...')
 
       let codeSet = false
-      const finalizeCode = () => {
+      const finalizeCode = async () => {
         if (codeSet) return
         codeSet = true
         if (pc.localDescription) {
-          setResponseCode(compressSdp(pc.localDescription))
+          const comp = await compressSdp(pc.localDescription)
+          setResponseCode(comp)
           setLoading(false)
           setLoadingProgress('')
           toast.success('Connection response code ready!')
@@ -707,13 +908,16 @@ export default function SecureShareTool() {
       }
 
       pc.onicecandidate = (event) => {
-        if (event.candidate === null) finalizeCode()
+        if (event.candidate === null) void finalizeCode()
       }
 
-      setTimeout(finalizeCode, 5000)
+      setTimeout(() => {
+        void finalizeCode()
+      }, 5000)
 
       pc.ondatachannel = (event) => {
         const dc = event.channel
+        dataChannelRef.current = dc
         dc.binaryType = 'arraybuffer'
 
         dc.onopen = () => {
@@ -809,7 +1013,10 @@ export default function SecureShareTool() {
                 receivedBytesRef.current,
               )} of ${formatSize(meta.size)}. Please reset and retry.`,
             )
+          } else {
+            toast.info('Connection closed by sender.')
           }
+          resetRecipientState()
         }
       }
     } catch {
@@ -855,9 +1062,15 @@ export default function SecureShareTool() {
       for (const filename of entries) {
         const fileEntry = zip.files[filename]
         if (!fileEntry.dir) {
-          const fileBlob = await fileEntry.async('blob')
+          let fileBlob = await fileEntry.async('blob')
           const sanitizedName = sanitizePath(filename)
           if (!sanitizedName) continue
+
+          const mimeType = getMimeType(sanitizedName)
+          if (mimeType) {
+            fileBlob = new Blob([fileBlob], { type: mimeType })
+          }
+
           tempFiles.push({
             id: crypto.randomUUID(),
             name: sanitizedName,
@@ -1050,12 +1263,22 @@ export default function SecureShareTool() {
                           </span>
                         </div>
                       </div>
-                      <button
-                        onClick={() => removeFile(item.id)}
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-2 shrink-0 rounded-lg p-1.5 transition-all duration-300"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="ml-2 flex shrink-0 items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => void handlePreview({ name: item.path, blob: item.file })}
+                          className="text-muted-foreground hover:!text-primary hover:!bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <button
+                          onClick={() => removeFile(item.id)}
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1064,25 +1287,47 @@ export default function SecureShareTool() {
           </div>
 
           <div className="border-border bg-card flex flex-col gap-4 rounded-xl border p-5 shadow-sm">
-            <Button
-              onClick={() => {
-                void setupSenderConnection()
-              }}
-              disabled={loading || files.length === 0 || !!initiatorCode}
-              className="to-primary text-primary-foreground h-11 w-full gap-2 bg-gradient-to-r from-emerald-500 font-semibold shadow-md transition-all duration-300 hover:opacity-95 hover:shadow-lg"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {loadingProgress}
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="h-4 w-4" />
-                  Initialize Secure Handshake
-                </>
-              )}
-            </Button>
+            {connectionState === 'connected' ? (
+              <Button
+                onClick={() => {
+                  void sendFilesDirectly()
+                }}
+                disabled={loading || files.length === 0}
+                className="to-primary text-primary-foreground h-11 w-full gap-2 bg-gradient-to-r from-emerald-500 font-semibold shadow-md transition-all duration-300 hover:opacity-95 hover:shadow-lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {loadingProgress}
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-4 w-4" />
+                    Send Queued Files (P2P)
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                onClick={() => {
+                  void setupSenderConnection()
+                }}
+                disabled={loading || files.length === 0 || !!initiatorCode}
+                className="to-primary text-primary-foreground h-11 w-full gap-2 bg-gradient-to-r from-emerald-500 font-semibold shadow-md transition-all duration-300 hover:opacity-95 hover:shadow-lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {loadingProgress}
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-4 w-4" />
+                    Initialize Secure Handshake
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           {initiatorCode && (
@@ -1595,14 +1840,24 @@ export default function SecureShareTool() {
                             </span>
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => downloadSingleFile(file.blob, file.name)}
-                          className="text-muted-foreground hover:!text-primary hover:!bg-primary/10 ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        <div className="ml-2 flex shrink-0 items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => void handlePreview(file)}
+                            className="text-muted-foreground hover:!text-primary hover:!bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => downloadSingleFile(file.blob, file.name)}
+                            className="text-muted-foreground hover:!text-primary hover:!bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1637,6 +1892,118 @@ export default function SecureShareTool() {
           </p>
         </div>
       </div>
+
+      {previewFile && (
+        <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md duration-200">
+          <div className="bg-card border-border animate-in zoom-in-95 flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border shadow-2xl duration-200">
+            <div className="border-border flex items-center justify-between border-b px-6 py-4">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-foreground truncate font-mono text-sm font-semibold">
+                  {previewFile.name}
+                </h3>
+                <p className="text-muted-foreground mt-0.5 font-mono text-xs">
+                  {formatSize(previewFile.blob.size)} • {previewFile.type.toUpperCase()} Preview
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => downloadSingleFile(previewFile.blob, previewFile.name)}
+                  className="h-8 gap-1.5 px-3 text-xs"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setPreviewFile(null)}
+                  className="text-muted-foreground hover:text-foreground h-8 w-8 rounded-lg p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-secondary/10 flex min-h-[300px] flex-1 items-center justify-center overflow-auto p-6">
+              {previewFile.type === 'image' && previewUrl && (
+                <div className="relative flex max-h-[60vh] w-full items-center justify-center overflow-hidden">
+                  <img
+                    src={previewUrl}
+                    alt={previewFile.name}
+                    className="max-h-[55vh] max-w-full rounded-lg object-contain shadow-md"
+                  />
+                </div>
+              )}
+
+              {previewFile.type === 'video' && previewUrl && (
+                <div className="w-full max-w-2xl overflow-hidden rounded-lg bg-black shadow-md">
+                  <video src={previewUrl} controls className="max-h-[55vh] w-full" />
+                </div>
+              )}
+
+              {previewFile.type === 'audio' && previewUrl && (
+                <div className="bg-card flex w-full max-w-md flex-col gap-3 rounded-xl border p-4 shadow-xs">
+                  <p className="text-muted-foreground truncate text-center font-mono text-xs">
+                    {previewFile.name}
+                  </p>
+                  <audio src={previewUrl} controls className="mt-2 w-full" />
+                </div>
+              )}
+
+              {previewFile.type === 'pdf' && previewUrl && (
+                <div className="flex flex-col items-center justify-center gap-4 p-8 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-500">
+                    <FileIcon className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h4 className="text-foreground text-sm font-semibold">PDF Document Ready</h4>
+                    <p className="text-muted-foreground mt-1 max-w-xs text-xs leading-relaxed">
+                      For the best experience, please open this PDF document in a new tab to view it
+                      with your browser's native reader.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => window.open(previewUrl, '_blank')}
+                    className="to-primary text-primary-foreground mt-2 h-9 bg-gradient-to-r from-emerald-500 font-semibold shadow-md transition-all hover:opacity-95"
+                  >
+                    Open PDF in New Tab
+                  </Button>
+                </div>
+              )}
+
+              {previewFile.type === 'text' && (
+                <div className="bg-secondary/20 text-foreground max-h-[55vh] w-full overflow-auto rounded-lg border p-4 text-left font-mono text-xs leading-relaxed whitespace-pre-wrap select-text">
+                  {previewFile.textContent}
+                </div>
+              )}
+
+              {previewFile.type === 'unsupported' && (
+                <div className="flex flex-col items-center justify-center gap-3 p-8 text-center">
+                  <div className="bg-secondary/40 text-muted-foreground flex h-14 w-14 items-center justify-center rounded-2xl border">
+                    <FileIcon className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-foreground text-sm font-semibold">Preview not available</h4>
+                    <p className="text-muted-foreground mt-1 max-w-xs text-xs leading-relaxed">
+                      This file format is not supported for inline browser preview. Please download
+                      the file to open it on your device.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => downloadSingleFile(previewFile.blob, previewFile.name)}
+                    className="to-primary text-primary-foreground mt-2 h-9 bg-gradient-to-r from-emerald-500 font-semibold shadow-md transition-all hover:opacity-95"
+                  >
+                    <Download className="mr-1.5 h-4 w-4" />
+                    Download File
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </ToolLayout>
   )
 }
