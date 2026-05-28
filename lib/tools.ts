@@ -128,7 +128,7 @@ export const tools: Tool[] = [
     id: 'secure-share',
     name: 'Secure Share',
     description:
-      'Military-grade end-to-end encrypted file and folder sharing. Double-encrypted using AES-256-GCM and PBKDF2 (600,000 iterations). Requires both sharing link and password to unlock.',
+      'Privacy-first serverless P2P file transfer — send images, photos, documents, folders, and any file type directly browser-to-browser via WebRTC. Zero server storage, SHA-256 integrity verification, QR code handshake, and real-time transfer dashboard.',
     icon: ShieldCheck,
     category: 'Security & Crypto',
   },

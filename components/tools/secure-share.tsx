@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ShieldCheck,
   Upload,
@@ -25,30 +25,65 @@ import {
 import JSZip from 'jszip'
 import QRCode from 'qrcode'
 import { toast } from 'sonner'
+import QrScanner from 'qr-scanner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToolLayout } from '@/components/tool-layout'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
+if (typeof window !== 'undefined') {
+  QrScanner.WORKER_PATH = '/qr-scanner-worker.min.js'
+}
+
+const ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun.cloudflare.com:3478' },
+]
+
+const MAX_TRANSFER_BYTES = 4 * 1024 * 1024 * 1024
+const MAX_QUEUE_BYTES = 4 * 1024 * 1024 * 1024
+const MAX_SDP_LENGTH = 65536
+
+const VALID_SDP_TYPES = ['offer', 'answer', 'pranswer', 'rollback'] as const
+
 interface FileItem {
+  id: string
   file: File
   path: string
   size: number
 }
 
 function compressSdp(sdpObj: RTCSessionDescriptionInit): string {
-  return btoa(unescape(encodeURIComponent(JSON.stringify(sdpObj))))
+  const json = JSON.stringify(sdpObj)
+  const bytes = new TextEncoder().encode(json)
+  let binary = ''
+  bytes.forEach((b) => (binary += String.fromCharCode(b)))
+  return btoa(binary)
 }
 
 function decompressSdp(base64Str: string): RTCSessionDescriptionInit {
-  const parsed = JSON.parse(decodeURIComponent(escape(atob(base64Str))))
+  if (base64Str.length > MAX_SDP_LENGTH) {
+    throw new Error('SDP payload too large')
+  }
+  const binary = atob(base64Str)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  const json = new TextDecoder().decode(bytes)
+  const parsed = JSON.parse(json) as unknown
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('Invalid SDP payload format')
   }
-  if (!('type' in parsed) || !('sdp' in parsed)) {
-    throw new Error('Missing required SDP properties')
+  const obj = parsed as Record<string, unknown>
+  if (typeof obj['type'] !== 'string' || !VALID_SDP_TYPES.includes(obj['type'] as never)) {
+    throw new Error('Invalid SDP type')
   }
-  return parsed as RTCSessionDescriptionInit
+  if (typeof obj['sdp'] !== 'string') {
+    throw new Error('Invalid SDP body')
+  }
+  return { type: obj['type'] as RTCSdpType, sdp: obj['sdp'] }
 }
 
 async function computeSha256(buffer: ArrayBuffer): Promise<string> {
@@ -57,9 +92,48 @@ async function computeSha256(buffer: ArrayBuffer): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
+function parseQrPayload(rawValue: string): { type: 'offer' | 'answer'; value: string } | null {
+  if (rawValue.includes('#offer=')) {
+    const value = rawValue.split('#offer=')[1]
+    return value ? { type: 'offer', value } : null
+  }
+  if (rawValue.includes('#answer=')) {
+    const value = rawValue.split('#answer=')[1]
+    return value ? { type: 'answer', value } : null
+  }
+  return null
+}
+
+function sanitizePath(filename: string): string {
+  return filename
+    .split(/[/\\]/)
+    .filter((part) => part.length > 0 && part !== '.' && part !== '..')
+    .join('/')
+}
+
+function formatSize(bytes: number): string {
+  if (!isFinite(bytes) || bytes < 0) return '0 Bytes'
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1)
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+function triggerDownload(url: string, filename: string): void {
+  const link = document.createElement('a')
+  document.body.appendChild(link)
+  link.href = url
+  link.download = filename
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
 export default function SecureShareTool() {
   const [activeTab, setActiveTab] = useState<'send' | 'receive'>('send')
   const [files, setFiles] = useState<FileItem[]>([])
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState('')
@@ -72,7 +146,6 @@ export default function SecureShareTool() {
   const [responseCode, setResponseCode] = useState('')
   const [copiedResponse, setCopiedResponse] = useState(false)
 
-  const [peerConnection, setPeerConnection] = useState<RTCPeerConnection | null>(null)
   const [connectionState, setConnectionState] = useState<string>('disconnected')
 
   const [transferProgress, setTransferProgress] = useState(0)
@@ -80,7 +153,7 @@ export default function SecureShareTool() {
   const [transferTimeRemaining, setTransferTimeRemaining] = useState('')
 
   const [decryptedFiles, setDecryptedFiles] = useState<
-    { name: string; size: number; blob: Blob }[]
+    { id: string; name: string; size: number; blob: Blob }[]
   >([])
   const [receivingMetadata, setReceivingMetadata] = useState<{
     name: string
@@ -100,9 +173,13 @@ export default function SecureShareTool() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const senderCanvasRef = useRef<HTMLCanvasElement>(null)
+  const receiverCanvasRef = useRef<HTMLCanvasElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const streamRef = useRef<MediaStream | null>(null)
+  const qrScannerRef = useRef<QrScanner | null>(null)
+  const offerQrInputRef = useRef<HTMLInputElement>(null)
+  const answerQrInputRef = useRef<HTMLInputElement>(null)
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null)
 
   const transferStartRef = useRef<number>(0)
   const receivedBytesRef = useRef<number>(0)
@@ -112,23 +189,34 @@ export default function SecureShareTool() {
   const receivingMetadataRef = useRef<{ name: string; size: number; hash: string } | null>(null)
   const isCancelledRef = useRef<boolean>(false)
 
+  const closePeerConnection = useCallback(() => {
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close()
+      peerConnectionRef.current = null
+    }
+  }, [])
+
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash
-      if (hash.startsWith('#offer=')) {
-        const offerVal = hash.substring(7)
-        if (offerVal) {
-          setRecipientRequest(offerVal)
-          setActiveTab('receive')
-          toast.success('Connection Request Code auto-imported!')
+      try {
+        if (hash.startsWith('#offer=')) {
+          const offerVal = decodeURIComponent(hash.substring(7))
+          if (offerVal) {
+            setRecipientRequest(offerVal)
+            setActiveTab('receive')
+            toast.success('Connection Request Code auto-imported!')
+          }
+        } else if (hash.startsWith('#answer=')) {
+          const answerVal = decodeURIComponent(hash.substring(8))
+          if (answerVal) {
+            setRecipientResponse(answerVal)
+            setActiveTab('send')
+            toast.success('Handshake Response Code auto-imported!')
+          }
         }
-      } else if (hash.startsWith('#answer=')) {
-        const answerVal = hash.substring(8)
-        if (answerVal) {
-          setRecipientResponse(answerVal)
-          setActiveTab('send')
-          toast.success('Handshake Response Code auto-imported!')
-        }
+      } catch {
+        toast.error('Invalid code in URL.')
       }
     }
 
@@ -157,103 +245,15 @@ export default function SecureShareTool() {
 
   useEffect(() => {
     return () => {
-      if (peerConnection) {
-        peerConnection.close()
+      closePeerConnection()
+      if (qrScannerRef.current) {
+        qrScannerRef.current.destroy()
+        qrScannerRef.current = null
       }
-      stopCamera()
     }
-  }, [peerConnection])
+  }, [closePeerConnection])
 
-  useEffect(() => {
-    if (connectionState === 'connected' && transferProgress > 0) {
-      drawGraph()
-    }
-  }, [transferProgress, connectionState])
-
-  const startCamera = async () => {
-    setScannerError('')
-    setScanResult('')
-
-    if (!('BarcodeDetector' in window)) {
-      setScannerError(
-        'Webcam scanning is not natively supported by your browser. Please use the fallback manual copy-paste inputs.',
-      )
-      return
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      })
-      streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        videoRef.current.setAttribute('playsinline', 'true')
-        await videoRef.current.play()
-        setShowScanner(true)
-        requestAnimationFrame(() => {
-          void scanFrame()
-        })
-      }
-    } catch {
-      setScannerError(
-        'Could not access camera device. Please grant permission or use the manual fallback.',
-      )
-    }
-  }
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop())
-      streamRef.current = null
-    }
-    setShowScanner(false)
-  }
-
-  const scanFrame = async () => {
-    if (!videoRef.current || !streamRef.current) return
-
-    try {
-      // @ts-ignore
-      const detector = new window.BarcodeDetector({ formats: ['qr_code'] })
-      const barcodes = await detector.detect(videoRef.current)
-      if (barcodes.length > 0) {
-        const rawValue = barcodes[0].rawValue
-        if (rawValue.includes('#offer=')) {
-          const offerVal = rawValue.split('#offer=')[1]
-          if (offerVal) {
-            setRecipientRequest(offerVal)
-            setActiveTab('receive')
-            toast.success('SDP Offer Scanned & Loaded!')
-            stopCamera()
-            return
-          }
-        } else if (rawValue.includes('#answer=')) {
-          const answerVal = rawValue.split('#answer=')[1]
-          if (answerVal) {
-            setRecipientResponse(answerVal)
-            setActiveTab('send')
-            toast.success('SDP Answer Scanned & Loaded!')
-            stopCamera()
-            return
-          }
-        } else {
-          setScanResult(rawValue)
-          toast.info('QR Code Scanned: ' + rawValue)
-        }
-      }
-    } catch {
-      // Ignore scanner iteration failures
-    }
-
-    if (streamRef.current) {
-      requestAnimationFrame(() => {
-        void scanFrame()
-      })
-    }
-  }
-
-  const drawGraph = () => {
+  const drawGraph = useCallback((canvasRef: React.RefObject<HTMLCanvasElement | null>) => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -309,25 +309,139 @@ export default function SecureShareTool() {
     ctx.strokeStyle = '#10b981'
     ctx.lineWidth = 2
     ctx.stroke()
+  }, [])
+
+  useEffect(() => {
+    if (connectionState === 'connected' && transferProgress > 0) {
+      if (activeTab === 'send') drawGraph(senderCanvasRef)
+      else drawGraph(receiverCanvasRef)
+    }
+  }, [transferProgress, connectionState, activeTab, drawGraph])
+
+  const handleQrScanSuccess = useCallback((rawValue: string) => {
+    const parsed = parseQrPayload(rawValue)
+    if (parsed) {
+      if (parsed.type === 'offer') {
+        setRecipientRequest(parsed.value)
+        setActiveTab('receive')
+        toast.success('SDP Offer Scanned & Loaded!')
+      } else {
+        setRecipientResponse(parsed.value)
+        setActiveTab('send')
+        toast.success('SDP Answer Scanned & Loaded!')
+      }
+      setShowScanner(false)
+    } else {
+      const display = rawValue.substring(0, 60)
+      setScanResult(display)
+      toast.info(`QR Code Scanned: ${display}`)
+    }
+  }, [])
+
+  const handleQrImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: 'offer' | 'answer',
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const result = await QrScanner.scanImage(file, { returnDetailedScanResult: true })
+      if (result && result.data) {
+        const rawValue = result.data
+        const parsed = parseQrPayload(rawValue)
+        if (type === 'offer') {
+          setRecipientRequest(parsed?.type === 'offer' ? parsed.value : rawValue)
+          toast.success('Connection Request Code read from QR image!')
+        } else {
+          setRecipientResponse(parsed?.type === 'answer' ? parsed.value : rawValue)
+          toast.success('Handshake Response Code read from QR image!')
+        }
+      } else {
+        toast.error('No QR code found in the uploaded image.')
+      }
+    } catch {
+      toast.error('Failed to read QR code from image. Please ensure it is a clear QR code.')
+    } finally {
+      e.target.value = ''
+    }
+  }
+
+  useEffect(() => {
+    if (showScanner && videoRef.current) {
+      setScannerError('')
+      setScanResult('')
+
+      const scanner = new QrScanner(
+        videoRef.current,
+        (result) => {
+          handleQrScanSuccess(result.data)
+        },
+        {
+          onDecodeError: () => {},
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+          returnDetailedScanResult: true,
+        },
+      )
+
+      qrScannerRef.current = scanner
+
+      scanner.start().catch(() => {
+        setScannerError(
+          'Could not access camera device. Please grant permission or use the manual fallback.',
+        )
+      })
+    } else {
+      if (qrScannerRef.current) {
+        qrScannerRef.current.destroy()
+        qrScannerRef.current = null
+      }
+    }
+
+    return () => {
+      if (qrScannerRef.current) {
+        qrScannerRef.current.destroy()
+        qrScannerRef.current = null
+      }
+    }
+  }, [showScanner, handleQrScanSuccess])
+
+  const processFiles = (newFiles: File[]) => {
+    const items: FileItem[] = newFiles.map((file) => ({
+      id: crypto.randomUUID(),
+      file,
+      path: (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name,
+      size: file.size,
+    }))
+    setFiles((prev) => [...prev, ...items])
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles: FileItem[] = []
-      for (let i = 0; i < e.target.files.length; i++) {
-        const file = e.target.files[i]
-        newFiles.push({
-          file,
-          path: file.webkitRelativePath || file.name,
-          size: file.size,
-        })
-      }
-      setFiles((prev) => [...prev, ...newFiles])
+      processFiles(Array.from(e.target.files))
     }
   }
 
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index))
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(Array.from(e.dataTransfer.files))
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsDragOver(false)
+  }
+
+  const removeFile = (id: string) => {
+    setFiles((prev) => prev.filter((f) => f.id !== id))
   }
 
   const clearAllFiles = () => {
@@ -342,10 +456,7 @@ export default function SecureShareTool() {
     setReceiverHash('')
     setHashMatch(null)
     speedHistory.current = []
-    if (peerConnection) {
-      peerConnection.close()
-      setPeerConnection(null)
-    }
+    closePeerConnection()
     setConnectionState('disconnected')
   }
 
@@ -359,6 +470,14 @@ export default function SecureShareTool() {
     setLoading(true)
     setLoadingProgress('Packaging files into archive...')
     try {
+      const totalQueueBytes = files.reduce((acc, f) => acc + f.size, 0)
+      if (totalQueueBytes > MAX_QUEUE_BYTES) {
+        toast.error('Total file size exceeds the 4GB limit.')
+        setLoading(false)
+        setLoadingProgress('')
+        return
+      }
+
       const zip = new JSZip()
       files.forEach((item) => {
         zip.file(item.path, item.file)
@@ -371,44 +490,39 @@ export default function SecureShareTool() {
       setSenderHash(zipHash)
 
       setLoadingProgress('Initializing direct connection offer...')
-      const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-      })
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+      peerConnectionRef.current = pc
 
       const dc = pc.createDataChannel('file-transfer', { ordered: true })
       dc.binaryType = 'arraybuffer'
+      dc.bufferedAmountLowThreshold = 524288
 
       pc.oniceconnectionstatechange = () => {
         setConnectionState(pc.iceConnectionState)
       }
 
-      setPeerConnection(pc)
-
       const offer = await pc.createOffer()
       await pc.setLocalDescription(offer)
 
       setLoadingProgress('Gathering connection paths...')
-      pc.onicecandidate = (event) => {
-        if (event.candidate === null) {
-          if (pc.localDescription) {
-            setInitiatorCode(compressSdp(pc.localDescription))
-            setLoading(false)
-            setLoadingProgress('')
-            toast.success('Connection request code ready!')
-          }
+
+      let codeSet = false
+      const finalizeCode = () => {
+        if (codeSet) return
+        codeSet = true
+        if (pc.localDescription) {
+          setInitiatorCode(compressSdp(pc.localDescription))
+          setLoading(false)
+          setLoadingProgress('')
+          toast.success('Connection request code ready!')
         }
       }
 
-      setTimeout(() => {
-        if (pc.iceGatheringState !== 'complete') {
-          if (pc.localDescription) {
-            setInitiatorCode(compressSdp(pc.localDescription))
-            setLoading(false)
-            setLoadingProgress('')
-            toast.success('Connection request code ready!')
-          }
-        }
-      }, 5000)
+      pc.onicecandidate = (event) => {
+        if (event.candidate === null) finalizeCode()
+      }
+
+      setTimeout(finalizeCode, 5000)
 
       dc.onopen = () => {
         toast.success('Direct secure tunnel established!')
@@ -431,11 +545,12 @@ export default function SecureShareTool() {
   }
 
   const connectToRecipient = async () => {
-    if (!recipientResponse.trim() || !peerConnection) return
+    const pc = peerConnectionRef.current
+    if (!recipientResponse.trim() || !pc) return
 
     try {
       const answer = decompressSdp(recipientResponse.trim())
-      await peerConnection.setRemoteDescription(answer)
+      await pc.setRemoteDescription(answer)
       toast.success('Handshake response processed. Connecting...')
     } catch {
       toast.error(
@@ -543,6 +658,22 @@ export default function SecureShareTool() {
     sendNextChunk()
   }
 
+  const resetRecipientState = useCallback(() => {
+    setRecipientRequest('')
+    setResponseCode('')
+    setDecryptedFiles([])
+    setReceivingMetadata(null)
+    receivingMetadataRef.current = null
+    setTransferProgress(0)
+    setTransferSpeed('')
+    setTransferTimeRemaining('')
+    setReceiverHash('')
+    setHashMatch(null)
+    speedHistory.current = []
+    closePeerConnection()
+    setConnectionState('disconnected')
+  }, [closePeerConnection])
+
   const handleProcessRequest = async () => {
     if (!recipientRequest.trim()) return
 
@@ -550,42 +681,36 @@ export default function SecureShareTool() {
     setLoadingProgress('Parsing connection request...')
     try {
       const offer = decompressSdp(recipientRequest.trim())
-      const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-      })
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+      peerConnectionRef.current = pc
 
       pc.oniceconnectionstatechange = () => {
         setConnectionState(pc.iceConnectionState)
       }
-
-      setPeerConnection(pc)
 
       await pc.setRemoteDescription(offer)
       const answer = await pc.createAnswer()
       await pc.setLocalDescription(answer)
 
       setLoadingProgress('Generating connection paths...')
-      pc.onicecandidate = (event) => {
-        if (event.candidate === null) {
-          if (pc.localDescription) {
-            setResponseCode(compressSdp(pc.localDescription))
-            setLoading(false)
-            setLoadingProgress('')
-            toast.success('Connection response code ready!')
-          }
+
+      let codeSet = false
+      const finalizeCode = () => {
+        if (codeSet) return
+        codeSet = true
+        if (pc.localDescription) {
+          setResponseCode(compressSdp(pc.localDescription))
+          setLoading(false)
+          setLoadingProgress('')
+          toast.success('Connection response code ready!')
         }
       }
 
-      setTimeout(() => {
-        if (pc.iceGatheringState !== 'complete') {
-          if (pc.localDescription) {
-            setResponseCode(compressSdp(pc.localDescription))
-            setLoading(false)
-            setLoadingProgress('')
-            toast.success('Connection response code ready!')
-          }
-        }
-      }, 5000)
+      pc.onicecandidate = (event) => {
+        if (event.candidate === null) finalizeCode()
+      }
+
+      setTimeout(finalizeCode, 5000)
 
       pc.ondatachannel = (event) => {
         const dc = event.channel
@@ -625,10 +750,26 @@ export default function SecureShareTool() {
               }
             } else {
               const chunk = msgEvent.data as ArrayBuffer
-              incomingChunksRef.current.push(chunk)
+              const meta = receivingMetadataRef.current
+
               receivedBytesRef.current += chunk.byteLength
 
-              const meta = receivingMetadataRef.current
+              if (receivedBytesRef.current > MAX_TRANSFER_BYTES) {
+                toast.error('Transfer exceeds maximum allowed size (4GB). Aborting.')
+                dc.close()
+                resetRecipientState()
+                return
+              }
+
+              if (meta && receivedBytesRef.current > meta.size * 1.05) {
+                toast.error('Received data significantly exceeds declared size. Aborting.')
+                dc.close()
+                resetRecipientState()
+                return
+              }
+
+              incomingChunksRef.current.push(chunk)
+
               if (meta) {
                 const progress = Math.min(100, (receivedBytesRef.current / meta.size) * 100)
                 setTransferProgress(Math.floor(progress))
@@ -694,23 +835,31 @@ export default function SecureShareTool() {
       const checkMatch = calculatedHash === meta.hash
       setHashMatch(checkMatch)
 
-      if (checkMatch) {
-        toast.success('SHA-256 Checksum Verified! Payload is intact.')
-      } else {
-        toast.error('Warning: Integrity Checksum Mismatch detected!')
+      if (!checkMatch) {
+        toast.error(
+          'Integrity Checksum Mismatch! Files will not be extracted to protect your device.',
+        )
+        setLoading(false)
+        setLoadingProgress('')
+        incomingChunksRef.current = []
+        return
       }
+
+      toast.success('SHA-256 Checksum Verified! Payload is intact.')
 
       setLoadingProgress('Extracting package contents...')
       const zip = await JSZip.loadAsync(fullArrayBuffer)
-      const tempFiles: { name: string; size: number; blob: Blob }[] = []
+      const tempFiles: { id: string; name: string; size: number; blob: Blob }[] = []
 
       const entries = Object.keys(zip.files)
       for (const filename of entries) {
         const fileEntry = zip.files[filename]
         if (!fileEntry.dir) {
           const fileBlob = await fileEntry.async('blob')
-          const sanitizedName = filename.replace(/\.\.\//g, '').replace(/\\/g, '/')
+          const sanitizedName = sanitizePath(filename)
+          if (!sanitizedName) continue
           tempFiles.push({
+            id: crypto.randomUUID(),
             name: sanitizedName,
             size: fileBlob.size,
             blob: fileBlob,
@@ -737,13 +886,7 @@ export default function SecureShareTool() {
       })
       const zipBlob = await zip.generateAsync({ type: 'blob' })
       const url = URL.createObjectURL(zipBlob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = receivingMetadata?.name || 'Archive.zip'
-      link.click()
-      setTimeout(() => {
-        URL.revokeObjectURL(url)
-      }, 1000)
+      triggerDownload(url, receivingMetadata?.name || 'Archive.zip')
     } catch {
       toast.error('Failed to bundle downloads.')
     }
@@ -751,40 +894,7 @@ export default function SecureShareTool() {
 
   const downloadSingleFile = (blob: Blob, name: string) => {
     const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = name.split('/').pop() || name
-    link.click()
-    setTimeout(() => {
-      URL.revokeObjectURL(url)
-    }, 1000)
-  }
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
-  const resetRecipientState = () => {
-    setRecipientRequest('')
-    setResponseCode('')
-    setDecryptedFiles([])
-    setReceivingMetadata(null)
-    receivingMetadataRef.current = null
-    setTransferProgress(0)
-    setTransferSpeed('')
-    setTransferTimeRemaining('')
-    setReceiverHash('')
-    setHashMatch(null)
-    speedHistory.current = []
-    if (peerConnection) {
-      peerConnection.close()
-      setPeerConnection(null)
-    }
-    setConnectionState('disconnected')
+    triggerDownload(url, name.split('/').pop() || name)
   }
 
   const resetSenderState = () => {
@@ -798,10 +908,7 @@ export default function SecureShareTool() {
     setReceiverHash('')
     setHashMatch(null)
     speedHistory.current = []
-    if (peerConnection) {
-      peerConnection.close()
-      setPeerConnection(null)
-    }
+    closePeerConnection()
     setConnectionState('disconnected')
   }
 
@@ -837,8 +944,14 @@ export default function SecureShareTool() {
         <TabsContent value="send" className="mt-4 flex flex-col gap-6">
           <div className="border-border bg-card flex flex-col gap-4 rounded-xl border p-5 shadow-sm">
             <div
-              className="border-primary/20 hover:border-primary/40 hover:bg-secondary/25 bg-secondary/10 group relative flex cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-xl border border-dashed px-4 py-9 text-center shadow-xs transition-all duration-300"
+              className={`border-primary/20 hover:border-primary/40 hover:bg-secondary/25 bg-secondary/10 group relative flex cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-xl border border-dashed px-4 py-9 text-center shadow-xs transition-all duration-300 ${
+                isDragOver ? 'border-primary/60 bg-primary/5 scale-[1.01]' : ''
+              }`}
               onClick={() => fileInputRef.current?.click()}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDragEnter={handleDragOver}
             >
               <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110">
                 <Upload className="h-6 w-6" />
@@ -913,9 +1026,9 @@ export default function SecureShareTool() {
                   </Button>
                 </div>
                 <div className="flex max-h-48 flex-col gap-2.5 overflow-y-auto pr-1">
-                  {files.map((item, idx) => (
+                  {files.map((item) => (
                     <div
-                      key={idx}
+                      key={item.id}
                       className="group border-primary/10 from-secondary/20 to-secondary/40 hover:from-secondary/30 hover:to-secondary/60 hover:border-primary/35 relative flex items-center justify-between overflow-hidden rounded-xl border bg-gradient-to-r p-3 text-xs shadow-xs transition-all duration-300 hover:shadow-md"
                     >
                       <div className="flex min-w-0 items-center gap-3">
@@ -938,7 +1051,7 @@ export default function SecureShareTool() {
                         </div>
                       </div>
                       <button
-                        onClick={() => removeFile(idx)}
+                        onClick={() => removeFile(item.id)}
                         className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-2 shrink-0 rounded-lg p-1.5 transition-all duration-300"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -1035,8 +1148,23 @@ export default function SecureShareTool() {
                     value={recipientResponse}
                     onChange={(e) => setRecipientResponse(e.target.value)}
                     placeholder="Paste recipient's Handshake Response here..."
-                    className="bg-secondary border-border text-foreground flex-1 font-mono text-xs"
+                    className="bg-secondary border-border text-foreground !h-10 w-full font-mono text-xs sm:flex-1"
                   />
+                  <input
+                    type="file"
+                    ref={answerQrInputRef}
+                    accept="image/*"
+                    onChange={(e) => void handleQrImageUpload(e, 'answer')}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => answerQrInputRef.current?.click()}
+                    className="border-border bg-secondary/50 text-muted-foreground h-10 shrink-0 gap-1.5 px-3 text-xs hover:text-white"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload QR Image
+                  </Button>
                   <Button
                     onClick={() => {
                       void connectToRecipient()
@@ -1053,8 +1181,7 @@ export default function SecureShareTool() {
                     variant="link"
                     size="sm"
                     onClick={() => {
-                      if (showScanner) stopCamera()
-                      else void startCamera()
+                      setShowScanner((prev) => !prev)
                     }}
                     className="text-primary gap-1 text-xs"
                   >
@@ -1074,7 +1201,7 @@ export default function SecureShareTool() {
               {scannerError ? (
                 <p className="text-destructive text-xs">{scannerError}</p>
               ) : (
-                <div className="border-primary/30 relative mx-auto w-full max-w-sm overflow-hidden rounded-lg border">
+                <div className="border-primary/30 relative mx-auto w-full max-w-sm overflow-hidden rounded-lg border bg-black">
                   <video ref={videoRef} className="h-auto w-full bg-black" />
                   <div className="border-primary/40 pointer-events-none absolute inset-0 flex items-center justify-center border-2">
                     <div className="border-primary h-48 w-48 animate-pulse border-2 border-dashed" />
@@ -1089,7 +1216,7 @@ export default function SecureShareTool() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={stopCamera}
+                onClick={() => setShowScanner(false)}
                 className="text-muted-foreground dark:hover:text-foreground mx-auto mt-2 w-fit text-xs hover:text-white"
               >
                 Close Camera
@@ -1144,7 +1271,7 @@ export default function SecureShareTool() {
                       Real-Time Throughput (MB/s)
                     </span>
                     <canvas
-                      ref={canvasRef}
+                      ref={senderCanvasRef}
                       className="bg-secondary/15 border-border/50 h-24 w-full rounded-lg border"
                     />
                   </div>
@@ -1161,6 +1288,7 @@ export default function SecureShareTool() {
               )}
             </div>
           )}
+
           {initiatorCode && (
             <Button
               variant="outline"
@@ -1183,13 +1311,31 @@ export default function SecureShareTool() {
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              <Input
-                value={recipientRequest}
-                onChange={(e) => setRecipientRequest(e.target.value)}
-                placeholder="Paste initiator's Connection Request Code here..."
-                disabled={loading || !!responseCode}
-                className="bg-secondary border-border text-foreground font-mono text-xs"
-              />
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  value={recipientRequest}
+                  onChange={(e) => setRecipientRequest(e.target.value)}
+                  placeholder="Paste initiator's Connection Request Code here..."
+                  disabled={loading || !!responseCode}
+                  className="bg-secondary border-border text-foreground !h-10 w-full font-mono text-xs sm:flex-1"
+                />
+                <input
+                  type="file"
+                  ref={offerQrInputRef}
+                  accept="image/*"
+                  onChange={(e) => void handleQrImageUpload(e, 'offer')}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => offerQrInputRef.current?.click()}
+                  disabled={loading || !!responseCode}
+                  className="border-border bg-secondary/50 text-muted-foreground h-10 shrink-0 gap-1.5 px-3 text-xs hover:text-white"
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload QR Image
+                </Button>
+              </div>
               {!responseCode && (
                 <div className="flex flex-col gap-2">
                   <Button
@@ -1215,8 +1361,7 @@ export default function SecureShareTool() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      if (showScanner) stopCamera()
-                      else void startCamera()
+                      setShowScanner((prev) => !prev)
                     }}
                     className="text-muted-foreground dark:hover:text-foreground mx-auto mt-1 w-fit gap-1 text-xs hover:text-white"
                   >
@@ -1236,7 +1381,7 @@ export default function SecureShareTool() {
               {scannerError ? (
                 <p className="text-destructive text-xs">{scannerError}</p>
               ) : (
-                <div className="border-primary/30 relative mx-auto w-full max-w-sm overflow-hidden rounded-lg border">
+                <div className="border-primary/30 relative mx-auto w-full max-w-sm overflow-hidden rounded-lg border bg-black">
                   <video ref={videoRef} className="h-auto w-full bg-black" />
                   <div className="border-primary/40 pointer-events-none absolute inset-0 flex items-center justify-center border-2">
                     <div className="border-primary h-48 w-48 animate-pulse border-2 border-dashed" />
@@ -1246,7 +1391,7 @@ export default function SecureShareTool() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={stopCamera}
+                onClick={() => setShowScanner(false)}
                 className="text-muted-foreground dark:hover:text-foreground mx-auto mt-2 w-fit text-xs hover:text-white"
               >
                 Close Camera
@@ -1366,7 +1511,7 @@ export default function SecureShareTool() {
                         Real-Time Throughput (MB/s)
                       </span>
                       <canvas
-                        ref={canvasRef}
+                        ref={receiverCanvasRef}
                         className="bg-secondary/15 border-border/50 h-24 w-full rounded-lg border"
                       />
                     </div>
@@ -1426,9 +1571,9 @@ export default function SecureShareTool() {
                   </div>
 
                   <div className="flex max-h-60 flex-col gap-2.5 overflow-y-auto">
-                    {decryptedFiles.map((file, idx) => (
+                    {decryptedFiles.map((file) => (
                       <div
-                        key={idx}
+                        key={file.id}
                         className="group border-primary/10 from-secondary/20 to-secondary/40 hover:from-secondary/30 hover:to-secondary/60 hover:border-primary/35 relative flex items-center justify-between overflow-hidden rounded-xl border bg-gradient-to-r p-3 text-xs shadow-xs transition-all duration-300 hover:shadow-md"
                       >
                         <div className="flex min-w-0 items-center gap-3">

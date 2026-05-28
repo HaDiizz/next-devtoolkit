@@ -22,6 +22,15 @@ import JSZip from 'jszip'
 
 type OutputFormat = 'image/png' | 'image/jpeg' | 'image/webp' | 'application/zip'
 
+const MAX_DIMENSION = 16000
+
+function sanitizeFilename(name: string): string {
+  return name
+    .split(/[/\\]/)
+    .filter((p) => p.length > 0 && p !== '.' && p !== '..')
+    .join('_')
+}
+
 export default function FileCompressor() {
   const [sourceFile, setSourceFile] = useState<File | null>(null)
   const [sourcePreview, setSourcePreview] = useState('')
@@ -46,6 +55,8 @@ export default function FileCompressor() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const readerRef = useRef<FileReader | null>(null)
+  const convertedUrlRef = useRef<string>('')
 
   const isImage = sourceType.startsWith('image/')
   const isPdf = sourceType === 'application/pdf'
@@ -59,6 +70,15 @@ export default function FileCompressor() {
   }, [sourceType, isImage, outputFormat])
 
   const handleFile = useCallback((file: File) => {
+    if (readerRef.current) {
+      readerRef.current.abort()
+    }
+
+    if (convertedUrlRef.current) {
+      URL.revokeObjectURL(convertedUrlRef.current)
+      convertedUrlRef.current = ''
+    }
+
     setConvertedUrl('')
     setConvertedSize(0)
     setSourceFile(file)
@@ -66,11 +86,13 @@ export default function FileCompressor() {
     setSourceType(file.type || 'unknown')
     setSourceSize(file.size)
     setSourcePreview('')
+    setError('')
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      const dataUrl = reader.result as string
-      if (file.type.startsWith('image/')) {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader()
+      readerRef.current = reader
+      reader.onload = () => {
+        const dataUrl = reader.result as string
         setSourcePreview(dataUrl)
         const img = new window.Image()
         img.onload = () => {
@@ -81,9 +103,9 @@ export default function FileCompressor() {
         }
         img.src = dataUrl
       }
+      reader.onerror = () => setError('Failed to read file.')
+      reader.readAsDataURL(file)
     }
-    reader.onerror = () => setError('Failed to read file.')
-    reader.readAsDataURL(file)
   }, [])
 
   const onDrop = useCallback(
@@ -159,7 +181,7 @@ export default function FileCompressor() {
   const compressGeneric = async (): Promise<Blob | null> => {
     if (!sourceFile) return null
     const zip = new JSZip()
-    zip.file(sourceName, sourceFile)
+    zip.file(sanitizeFilename(sourceName), sourceFile)
     return await zip.generateAsync({
       type: 'blob',
       compression: 'DEFLATE',
@@ -188,8 +210,13 @@ export default function FileCompressor() {
 
       if (!finalBlob) throw new Error('Optimization failed')
 
+      if (convertedUrlRef.current) {
+        URL.revokeObjectURL(convertedUrlRef.current)
+      }
+      const newUrl = URL.createObjectURL(finalBlob)
+      convertedUrlRef.current = newUrl
       setConvertedSize(finalBlob.size)
-      setConvertedUrl(URL.createObjectURL(finalBlob))
+      setConvertedUrl(newUrl)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Optimization failed')
     } finally {
@@ -201,12 +228,22 @@ export default function FileCompressor() {
     if (!convertedUrl) return
     const link = document.createElement('a')
     const ext = outputFormat === 'application/zip' ? 'zip' : outputFormat.split('/')[1]
+    document.body.appendChild(link)
     link.href = convertedUrl
     link.download = `optimized-${sourceName.split('.')[0]}.${ext}`
     link.click()
+    document.body.removeChild(link)
   }
 
   const clear = () => {
+    if (readerRef.current) {
+      readerRef.current.abort()
+      readerRef.current = null
+    }
+    if (convertedUrlRef.current) {
+      URL.revokeObjectURL(convertedUrlRef.current)
+      convertedUrlRef.current = ''
+    }
     setSourceFile(null)
     setSourcePreview('')
     setSourceName('')
@@ -219,10 +256,11 @@ export default function FileCompressor() {
   }
 
   const formatSize = (bytes: number) => {
+    if (!isFinite(bytes) || bytes < 0) return '0 B'
     if (bytes === 0) return '0 B'
     const k = 1024
     const sizes = ['B', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1)
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
@@ -352,10 +390,15 @@ export default function FileCompressor() {
                         type="number"
                         value={width || ''}
                         onChange={(e) => {
-                          const w = parseInt(e.target.value) || 0
+                          const w = Math.min(parseInt(e.target.value) || 0, MAX_DIMENSION)
                           setWidth(w)
                           if (lockAspectRatio && originalWidth > 0)
-                            setHeight(Math.round((w * originalHeight) / originalWidth))
+                            setHeight(
+                              Math.min(
+                                Math.round((w * originalHeight) / originalWidth),
+                                MAX_DIMENSION,
+                              ),
+                            )
                           setConvertedUrl('')
                         }}
                         className="bg-secondary border-border text-foreground w-full rounded-md border px-3 py-1.5 font-mono text-xs outline-none"
@@ -379,10 +422,15 @@ export default function FileCompressor() {
                         type="number"
                         value={height || ''}
                         onChange={(e) => {
-                          const h = parseInt(e.target.value) || 0
+                          const h = Math.min(parseInt(e.target.value) || 0, MAX_DIMENSION)
                           setHeight(h)
                           if (lockAspectRatio && originalHeight > 0)
-                            setWidth(Math.round((h * originalWidth) / originalHeight))
+                            setWidth(
+                              Math.min(
+                                Math.round((h * originalWidth) / originalHeight),
+                                MAX_DIMENSION,
+                              ),
+                            )
                           setConvertedUrl('')
                         }}
                         className="bg-secondary border-border text-foreground w-full rounded-md border px-3 py-1.5 font-mono text-xs outline-none"

@@ -16,6 +16,8 @@ const FORMAT_OPTIONS: { value: OutputFormat; label: string; ext: string }[] = [
   { value: 'image/bmp', label: 'BMP', ext: 'bmp' },
 ]
 
+const MAX_DIMENSION = 16000
+
 export default function ImageConverterTool() {
   const [sourcePreview, setSourcePreview] = useState('')
   const [sourceName, setSourceName] = useState('')
@@ -32,8 +34,13 @@ export default function ImageConverterTool() {
   const [lockAspectRatio, setLockAspectRatio] = useState(true)
   const [error, setError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const readerRef = useRef<FileReader | null>(null)
 
   const handleFile = useCallback((file: File) => {
+    if (readerRef.current) {
+      readerRef.current.abort()
+    }
+
     setError('')
     setConvertedUrl('')
     setSourceName(file.name)
@@ -41,6 +48,7 @@ export default function ImageConverterTool() {
     setSourceSize(file.size)
 
     const reader = new FileReader()
+    readerRef.current = reader
     reader.onload = () => {
       const dataUrl = reader.result as string
       setSourcePreview(dataUrl)
@@ -62,30 +70,33 @@ export default function ImageConverterTool() {
     (e: React.DragEvent) => {
       e.preventDefault()
       const file = e.dataTransfer.files[0]
-      if (file && file.type.startsWith('image')) {
+      if (file && /^image\//i.test(file.type)) {
         handleFile(file)
       }
     },
     [handleFile],
   )
 
+  const MAX_DIMENSION_LOCAL = MAX_DIMENSION
+
   const convert = () => {
     if (!sourcePreview) return
     setError('')
 
+    const targetW = Math.min(width || 0, MAX_DIMENSION_LOCAL)
+    const targetH = Math.min(height || 0, MAX_DIMENSION_LOCAL)
+
     const img = new window.Image()
-    img.crossOrigin = 'anonymous'
     img.onload = () => {
       const canvas = document.createElement('canvas')
-      canvas.width = width || img.naturalWidth
-      canvas.height = height || img.naturalHeight
+      canvas.width = targetW || img.naturalWidth
+      canvas.height = targetH || img.naturalHeight
       const ctx = canvas.getContext('2d')
       if (!ctx) {
         setError('Canvas context not available.')
         return
       }
 
-      // For JPEG, fill white background (no alpha support)
       if (outputFormat === 'image/jpeg') {
         ctx.fillStyle = '#FFFFFF'
         ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -97,7 +108,6 @@ export default function ImageConverterTool() {
       const dataUrl = canvas.toDataURL(outputFormat, q)
       setConvertedUrl(dataUrl)
 
-      // Estimate size from base64
       const base64 = dataUrl.split(',')[1]
       if (base64) {
         setConvertedSize(Math.round((base64.length * 3) / 4))
@@ -112,12 +122,18 @@ export default function ImageConverterTool() {
     const ext = FORMAT_OPTIONS.find((f) => f.value === outputFormat)?.ext ?? 'png'
     const baseName = sourceName.replace(/\.[^.]+$/, '')
     const a = document.createElement('a')
+    document.body.appendChild(a)
     a.href = convertedUrl
     a.download = `${baseName}.${ext}`
     a.click()
+    document.body.removeChild(a)
   }
 
   const clear = () => {
+    if (readerRef.current) {
+      readerRef.current.abort()
+      readerRef.current = null
+    }
     setSourcePreview('')
     setSourceName('')
     setSourceType('')
@@ -279,10 +295,10 @@ export default function ImageConverterTool() {
                   type="number"
                   value={width || ''}
                   onChange={(e) => {
-                    const w = parseInt(e.target.value) || 0
+                    const w = Math.min(parseInt(e.target.value) || 0, 16000)
                     setWidth(w)
                     if (lockAspectRatio && originalWidth > 0) {
-                      setHeight(Math.round((w * originalHeight) / originalWidth))
+                      setHeight(Math.min(Math.round((w * originalHeight) / originalWidth), 16000))
                     }
                     setConvertedUrl('')
                   }}
@@ -310,10 +326,10 @@ export default function ImageConverterTool() {
                   type="number"
                   value={height || ''}
                   onChange={(e) => {
-                    const h = parseInt(e.target.value) || 0
+                    const h = Math.min(parseInt(e.target.value) || 0, 16000)
                     setHeight(h)
                     if (lockAspectRatio && originalHeight > 0) {
-                      setWidth(Math.round((h * originalWidth) / originalHeight))
+                      setWidth(Math.min(Math.round((h * originalWidth) / originalHeight), 16000))
                     }
                     setConvertedUrl('')
                   }}
