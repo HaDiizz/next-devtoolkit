@@ -125,6 +125,14 @@ export const tools: Tool[] = [
     category: 'Security & Crypto',
   },
   {
+    id: 'secure-share',
+    name: 'Secure Share',
+    description:
+      'Military-grade end-to-end encrypted file and folder sharing. Double-encrypted using AES-256-GCM and PBKDF2 (600,000 iterations). Requires both sharing link and password to unlock.',
+    icon: ShieldCheck,
+    category: 'Security & Crypto',
+  },
+  {
     id: 'base64-converter',
     name: 'Base64 Encoder',
     description:
