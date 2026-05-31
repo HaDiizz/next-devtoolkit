@@ -46,6 +46,7 @@ const ICE_SERVERS: RTCIceServer[] = [
 const MAX_TRANSFER_BYTES = 4 * 1024 * 1024 * 1024
 const MAX_QUEUE_BYTES = 4 * 1024 * 1024 * 1024
 const MAX_SDP_LENGTH = 65536
+const LARGE_FILE_WARNING_BYTES = 2 * 1024 * 1024 * 1024
 
 const VALID_SDP_TYPES = ['offer', 'answer', 'pranswer', 'rollback'] as const
 
@@ -178,6 +179,8 @@ export default function SecureShareTool() {
 
   const [loading, setLoading] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState('')
+  const [zipProgress, setZipProgress] = useState(0)
+  const [isZipping, setIsZipping] = useState(false)
 
   const [initiatorCode, setInitiatorCode] = useState('')
   const [copiedInitiator, setCopiedInitiator] = useState(false)
@@ -200,6 +203,7 @@ export default function SecureShareTool() {
     name: string
     size: number
     hash: string
+    isZipped: boolean
   } | null>(null)
 
   const [senderHash, setSenderHash] = useState('')
@@ -235,7 +239,12 @@ export default function SecureShareTool() {
   const sentBytesRef = useRef<number>(0)
   const incomingChunksRef = useRef<ArrayBuffer[]>([])
   const speedHistory = useRef<number[]>([])
-  const receivingMetadataRef = useRef<{ name: string; size: number; hash: string } | null>(null)
+  const receivingMetadataRef = useRef<{
+    name: string
+    size: number
+    hash: string
+    isZipped: boolean
+  } | null>(null)
   const isCancelledRef = useRef<boolean>(false)
 
   const closePeerConnection = useCallback(() => {
@@ -600,34 +609,69 @@ export default function SecureShareTool() {
     setConnectionState('disconnected')
   }
 
+  const prepareFilesForTransfer = useCallback(async (): Promise<{
+    buffer: ArrayBuffer
+    filename: string
+    hash: string
+    isZipped: boolean
+  } | null> => {
+    const totalBytes = files.reduce((acc, f) => acc + f.size, 0)
+    if (totalBytes > MAX_QUEUE_BYTES) {
+      toast.error('Total file size exceeds the 4GB limit.')
+      return null
+    }
+
+    if (files.length === 1) {
+      setLoadingProgress('Reading file...')
+      const buffer = await files[0].file.arrayBuffer()
+      setLoadingProgress('Calculating SHA-256 hash...')
+      const hash = await computeSha256(buffer)
+      return { buffer, filename: files[0].file.name, hash, isZipped: false }
+    } else {
+      setIsZipping(true)
+      setZipProgress(0)
+      setLoadingProgress('Packaging files into archive...')
+      const zip = new JSZip()
+      files.forEach((item) => {
+        zip.file(item.path, item.file)
+      })
+      const zipBlob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+        setZipProgress(Math.floor(metadata.percent))
+      })
+      setIsZipping(false)
+      setZipProgress(0)
+      const zipBuffer = await zipBlob.arrayBuffer()
+      setLoadingProgress('Calculating SHA-256 hash...')
+      const hash = await computeSha256(zipBuffer)
+      return { buffer: zipBuffer, filename: 'Archive.zip', hash, isZipped: true }
+    }
+  }, [files])
+
   const setupSenderConnection = async () => {
     if (files.length === 0) {
       toast.error('Please select at least one file or folder.')
       return
     }
 
+    const totalBytes = files.reduce((acc, f) => acc + f.size, 0)
+    if (totalBytes > LARGE_FILE_WARNING_BYTES) {
+      toast.warning(
+        'File exceeds 2 GB — both devices need sufficient free RAM. A fast local network is recommended.',
+      )
+    }
+
     isCancelledRef.current = false
     setLoading(true)
-    setLoadingProgress('Packaging files into archive...')
+    setLoadingProgress('Preparing files...')
     try {
-      const totalQueueBytes = files.reduce((acc, f) => acc + f.size, 0)
-      if (totalQueueBytes > MAX_QUEUE_BYTES) {
-        toast.error('Total file size exceeds the 4GB limit.')
+      const prepared = await prepareFilesForTransfer()
+      if (!prepared) {
         setLoading(false)
         setLoadingProgress('')
         return
       }
 
-      const zip = new JSZip()
-      files.forEach((item) => {
-        zip.file(item.path, item.file)
-      })
-      const zipBlob = await zip.generateAsync({ type: 'blob' })
-      const zipBuffer = await zipBlob.arrayBuffer()
-
-      setLoadingProgress('Calculating SHA-256 hash...')
-      const zipHash = await computeSha256(zipBuffer)
-      setSenderHash(zipHash)
+      setSenderHash(prepared.hash)
 
       setLoadingProgress('Initializing direct connection offer...')
       const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
@@ -671,10 +715,11 @@ export default function SecureShareTool() {
       dc.onopen = () => {
         toast.success('Direct secure tunnel established!')
         void startFileTransfer(
-          zipBuffer,
-          files.length === 1 ? files[0].file.name + '.zip' : 'Archive.zip',
+          prepared.buffer,
+          prepared.filename,
           dc,
-          zipHash,
+          prepared.hash,
+          prepared.isZipped,
         )
       }
 
@@ -687,6 +732,8 @@ export default function SecureShareTool() {
       toast.error('Initialization failed.')
       setLoading(false)
       setLoadingProgress('')
+      setIsZipping(false)
+      setZipProgress(0)
     }
   }
 
@@ -701,42 +748,40 @@ export default function SecureShareTool() {
       return
     }
 
+    const totalBytes = files.reduce((acc, f) => acc + f.size, 0)
+    if (totalBytes > LARGE_FILE_WARNING_BYTES) {
+      toast.warning(
+        'File exceeds 2 GB — both devices need sufficient free RAM. A fast local network is recommended.',
+      )
+    }
+
     setLoading(true)
-    setLoadingProgress('Packaging new files...')
+    setLoadingProgress('Preparing files...')
     try {
-      const totalQueueBytes = files.reduce((acc, f) => acc + f.size, 0)
-      if (totalQueueBytes > MAX_QUEUE_BYTES) {
-        toast.error('Total file size exceeds the 4GB limit.')
+      const prepared = await prepareFilesForTransfer()
+      if (!prepared) {
         setLoading(false)
         setLoadingProgress('')
         return
       }
 
-      const zip = new JSZip()
-      files.forEach((item) => {
-        zip.file(item.path, item.file)
-      })
-      const zipBlob = await zip.generateAsync({ type: 'blob' })
-      const zipBuffer = await zipBlob.arrayBuffer()
-
-      setLoadingProgress('Calculating SHA-256 hash...')
-      const zipHash = await computeSha256(zipBuffer)
-      setSenderHash(zipHash)
-
-      setLoadingProgress('Sending files...')
+      setSenderHash(prepared.hash)
       setLoading(false)
       setLoadingProgress('')
 
       void startFileTransfer(
-        zipBuffer,
-        files.length === 1 ? files[0].file.name + '.zip' : 'Archive.zip',
+        prepared.buffer,
+        prepared.filename,
         dc,
-        zipHash,
+        prepared.hash,
+        prepared.isZipped,
       )
     } catch {
       toast.error('Packaging failed.')
       setLoading(false)
       setLoadingProgress('')
+      setIsZipping(false)
+      setZipProgress(0)
     }
   }
 
@@ -760,10 +805,13 @@ export default function SecureShareTool() {
     filename: string,
     dc: RTCDataChannel,
     hashVal: string,
+    isZipped: boolean = true,
   ) => {
     const totalSize = buffer.byteLength
     try {
-      dc.send(JSON.stringify({ type: 'meta', name: filename, size: totalSize, hash: hashVal }))
+      dc.send(
+        JSON.stringify({ type: 'meta', name: filename, size: totalSize, hash: hashVal, isZipped }),
+      )
     } catch {
       toast.error('Failed to initiate transfer. Connection lost.')
       return
@@ -932,12 +980,14 @@ export default function SecureShareTool() {
                 name?: string
                 size?: number
                 hash?: string
+                isZipped?: boolean
               }
               if (data.type === 'meta') {
                 const metaVal = {
                   name: data.name || 'Archive.zip',
                   size: data.size || 0,
                   hash: data.hash || '',
+                  isZipped: data.isZipped !== false,
                 }
                 receivingMetadataRef.current = metaVal
                 setReceivingMetadata(metaVal)
@@ -1032,7 +1082,10 @@ export default function SecureShareTool() {
     setLoading(true)
     setLoadingProgress('Reassembling file chunks...')
     try {
-      const fullBlob = new Blob(incomingChunksRef.current, { type: 'application/zip' })
+      const mimeHint = meta.isZipped
+        ? 'application/zip'
+        : getMimeType(meta.name) || 'application/octet-stream'
+      const fullBlob = new Blob(incomingChunksRef.current, { type: mimeHint })
       const fullArrayBuffer = await fullBlob.arrayBuffer()
 
       setLoadingProgress('Verifying cryptographic SHA-256 checksum...')
@@ -1054,34 +1107,48 @@ export default function SecureShareTool() {
 
       toast.success('SHA-256 Checksum Verified! Payload is intact.')
 
-      setLoadingProgress('Extracting package contents...')
-      const zip = await JSZip.loadAsync(fullArrayBuffer)
-      const tempFiles: { id: string; name: string; size: number; blob: Blob }[] = []
-
-      const entries = Object.keys(zip.files)
-      for (const filename of entries) {
-        const fileEntry = zip.files[filename]
-        if (!fileEntry.dir) {
-          let fileBlob = await fileEntry.async('blob')
-          const sanitizedName = sanitizePath(filename)
-          if (!sanitizedName) continue
-
-          const mimeType = getMimeType(sanitizedName)
-          if (mimeType) {
-            fileBlob = new Blob([fileBlob], { type: mimeType })
-          }
-
-          tempFiles.push({
+      if (!meta.isZipped) {
+        const mimeType = getMimeType(meta.name) || 'application/octet-stream'
+        const fileBlob = new Blob([fullArrayBuffer], { type: mimeType })
+        setDecryptedFiles([
+          {
             id: crypto.randomUUID(),
-            name: sanitizedName,
+            name: meta.name,
             size: fileBlob.size,
             blob: fileBlob,
-          })
-        }
-      }
+          },
+        ])
+        toast.success('File received successfully!')
+      } else {
+        setLoadingProgress('Extracting package contents...')
+        const zip = await JSZip.loadAsync(fullArrayBuffer)
+        const tempFiles: { id: string; name: string; size: number; blob: Blob }[] = []
 
-      setDecryptedFiles(tempFiles)
-      toast.success('All files successfully transferred and extracted!')
+        const entries = Object.keys(zip.files)
+        for (const filename of entries) {
+          const fileEntry = zip.files[filename]
+          if (!fileEntry.dir) {
+            let fileBlob = await fileEntry.async('blob')
+            const sanitizedName = sanitizePath(filename)
+            if (!sanitizedName) continue
+
+            const mimeType = getMimeType(sanitizedName)
+            if (mimeType) {
+              fileBlob = new Blob([fileBlob], { type: mimeType })
+            }
+
+            tempFiles.push({
+              id: crypto.randomUUID(),
+              name: sanitizedName,
+              size: fileBlob.size,
+              blob: fileBlob,
+            })
+          }
+        }
+
+        setDecryptedFiles(tempFiles)
+        toast.success('All files successfully transferred and extracted!')
+      }
     } catch {
       toast.error('Failed to unpack files.')
     } finally {
@@ -1124,6 +1191,8 @@ export default function SecureShareTool() {
     closePeerConnection()
     setConnectionState('disconnected')
   }
+
+  const totalFileSize = files.reduce((acc, f) => acc + f.size, 0)
 
   return (
     <ToolLayout
@@ -1171,7 +1240,7 @@ export default function SecureShareTool() {
               </div>
               <div>
                 <p className="text-foreground text-sm font-semibold">
-                  Drag and drop files & folders here
+                  Drag and drop files &amp; folders here
                 </p>
                 <p className="text-muted-foreground mt-1 text-xs">
                   Pack directory structures or multiple files directly
@@ -1227,7 +1296,7 @@ export default function SecureShareTool() {
                 <div className="flex items-center justify-between border-b pb-2">
                   <span className="text-foreground text-xs font-semibold">
                     Queue: {files.length} {files.length === 1 ? 'file' : 'files'} (
-                    {formatSize(files.reduce((acc, f) => acc + f.size, 0))})
+                    {formatSize(totalFileSize)})
                   </span>
                   <Button
                     variant="ghost"
@@ -1238,6 +1307,33 @@ export default function SecureShareTool() {
                     Clear All
                   </Button>
                 </div>
+
+                {totalFileSize > LARGE_FILE_WARNING_BYTES && (
+                  <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-600 dark:text-amber-400">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      <strong>Large transfer warning (&gt;2 GB):</strong> Both devices must hold the
+                      entire payload in RAM. Transfer over a fast local network is strongly
+                      recommended.
+                    </span>
+                  </div>
+                )}
+
+                {isZipping && (
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Creating archive…</span>
+                      <span className="text-foreground font-mono font-bold">{zipProgress}%</span>
+                    </div>
+                    <div className="bg-secondary/50 h-1.5 w-full overflow-hidden rounded-full">
+                      <div
+                        className="to-primary h-full bg-gradient-to-r from-emerald-500 transition-all duration-300"
+                        style={{ width: `${zipProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex max-h-48 flex-col gap-2.5 overflow-y-auto pr-1">
                   {files.map((item) => (
                     <div
@@ -1298,7 +1394,7 @@ export default function SecureShareTool() {
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {loadingProgress}
+                    {isZipping ? `Packaging… ${zipProgress}%` : loadingProgress}
                   </>
                 ) : (
                   <>
@@ -1318,7 +1414,7 @@ export default function SecureShareTool() {
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {loadingProgress}
+                    {isZipping ? `Packaging… ${zipProgress}%` : loadingProgress}
                   </>
                 ) : (
                   <>
@@ -1790,8 +1886,8 @@ export default function SecureShareTool() {
                             <span className="font-bold">Warning: Integrity Checksum Mismatch</span>
                             <p className="mt-1 leading-relaxed">
                               The reassembled zip archive hash does not match the sender's computed
-                              SHA-256. Payload may be corrupt. Please click "Reset Connection
-                              Console" to retry the transfer.
+                              SHA-256. Payload may be corrupt. Please click &quot;Reset Connection
+                              Console&quot; to retry the transfer.
                             </p>
                           </div>
                         </>
@@ -1961,7 +2057,7 @@ export default function SecureShareTool() {
                     <h4 className="text-foreground text-sm font-semibold">PDF Document Ready</h4>
                     <p className="text-muted-foreground mt-1 max-w-xs text-xs leading-relaxed">
                       For the best experience, please open this PDF document in a new tab to view it
-                      with your browser's native reader.
+                      with your browser&apos;s native reader.
                     </p>
                   </div>
                   <Button
