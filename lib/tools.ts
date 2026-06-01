@@ -133,6 +133,14 @@ export const tools: Tool[] = [
     category: 'Security & Crypto',
   },
   {
+    id: 'key-converter',
+    name: 'Key Pair Generator & Converter',
+    description:
+      'Generate cryptographically secure RSA and ECDSA key pairs. Convert keys seamlessly between PEM, JWK, and raw formats, and perform asymmetric message signing and verification directly in your browser.',
+    icon: Key,
+    category: 'Security & Crypto',
+  },
+  {
     id: 'base64-converter',
     name: 'Base64 Encoder',
     description:

@@ -12,6 +12,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   'hmac-generator': dynamic(() => import('@/components/tools/hmac-generator')),
   'encryption-tool': dynamic(() => import('@/components/tools/encryption-tool')),
   'secure-share': dynamic(() => import('@/components/tools/secure-share')),
+  'key-converter': dynamic(() => import('@/components/tools/key-converter')),
   'base64-converter': dynamic(() => import('@/components/tools/base64-converter')),
   'url-encoder': dynamic(() => import('@/components/tools/url-encoder')),
   'jwt-decoder': dynamic(() => import('@/components/tools/jwt-decoder')),
