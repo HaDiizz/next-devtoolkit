@@ -283,8 +283,8 @@ export default function FileCompressor() {
       description="Optimize images, PDFs, and generic files to reduce storage space"
       icon={Zap}
     >
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="space-y-4 lg:col-span-7">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="min-w-0 space-y-4 lg:col-span-7">
           {!sourceName ? (
             <div
               onDragOver={(e) => e.preventDefault()}
@@ -299,8 +299,8 @@ export default function FileCompressor() {
                 Images (PNG/JPG/WebP), PDF, and other files
               </p>
               <Button
-                variant="outline"
-                className="text-muted-foreground dark:hover:text-foreground mt-6 hover:text-white"
+                variant="secondary"
+                className="mt-6 gap-2 font-medium"
                 onClick={() => fileInputRef.current?.click()}
               >
                 Select File
@@ -329,14 +329,13 @@ export default function FileCompressor() {
                   <p className="text-foreground font-medium">{sourceName}</p>
                 </div>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-4 right-4 h-8 w-8 rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/70"
+              <button
+                type="button"
+                className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-colors hover:bg-black/70"
                 onClick={clear}
               >
                 <X className="h-4 w-4" />
-              </Button>
+              </button>
 
               <div className="absolute right-4 bottom-4 left-4 flex items-center justify-between rounded-full bg-black/50 px-4 py-2 text-xs text-white backdrop-blur-md">
                 <span className="max-w-[150px] truncate">{sourceName}</span>
@@ -356,7 +355,7 @@ export default function FileCompressor() {
           )}
         </div>
 
-        <div className="space-y-6 lg:col-span-5">
+        <div className="min-w-0 space-y-6 lg:col-span-5">
           <div className="bg-secondary/30 space-y-6 rounded-2xl border border-white/5 p-6">
             {isImage ? (
               <>
@@ -404,10 +403,14 @@ export default function FileCompressor() {
                         className="bg-secondary border-border text-foreground w-full rounded-md border px-3 py-1.5 font-mono text-xs outline-none"
                       />
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`text-muted-foreground dark:hover:text-foreground mt-4 mt-5 h-8 w-8 rounded-full p-0 hover:text-white ${lockAspectRatio ? 'text-primary' : ''}`}
+                    <button
+                      type="button"
+                      title={lockAspectRatio ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
+                      className={`mt-5 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                        lockAspectRatio
+                          ? 'bg-primary/10 text-primary hover:bg-primary/20'
+                          : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                      }`}
                       onClick={() => setLockAspectRatio(!lockAspectRatio)}
                     >
                       {lockAspectRatio ? (
@@ -415,7 +418,7 @@ export default function FileCompressor() {
                       ) : (
                         <Unlock className="h-3.5 w-3.5" />
                       )}
-                    </Button>
+                    </button>
                     <div className="flex-1 space-y-1">
                       <Label className="text-muted-foreground text-[10px]">Height</Label>
                       <input
