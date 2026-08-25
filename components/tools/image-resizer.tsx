@@ -265,6 +265,7 @@ export default function ImageResizerTool() {
   }, [])
 
   useEffect(() => {
+    isUnmountedRef.current = false
     return () => {
       isUnmountedRef.current = true
       activeUrlsRef.current.forEach((url) => URL.revokeObjectURL(url))
