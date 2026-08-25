@@ -36,6 +36,7 @@ const toolComponents: Record<string, React.ComponentType> = {
   'timezone-converter': dynamic(() => import('@/components/tools/timezone-converter')),
   'cron-reader': dynamic(() => import('@/components/tools/cron-reader')),
   'image-converter': dynamic(() => import('@/components/tools/image-converter')),
+  'image-resizer': dynamic(() => import('@/components/tools/image-resizer')),
   'file-compressor': dynamic(() => import('@/components/tools/file-compressor')),
   'ip-address-tool': dynamic(() => import('@/components/tools/ip-address-tool')),
   'sql-analyzer': dynamic(() => import('@/components/tools/sql-analyzer')),
