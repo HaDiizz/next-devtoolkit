@@ -32,6 +32,7 @@ import {
   Network,
   MessageCircle,
   Database,
+  Scaling,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -322,6 +323,14 @@ export const tools: Tool[] = [
     description:
       'High-speed browser-based image converter. Effortlessly transform images between PNG, JPEG, WebP, and BMP formats without uploading any data to a server for maximum privacy.',
     icon: ImageIcon,
+    category: 'Media & Files',
+  },
+  {
+    id: 'image-resizer',
+    name: 'Image Resizer',
+    description:
+      'Batch resize images by exact pixel dimensions, percentage, or ready-made presets for social media, screens, and LINE OA. Crop-to-fill with adjustable focal point, live before/after preview, all processed locally in your browser.',
+    icon: Scaling,
     category: 'Media & Files',
   },
   {
