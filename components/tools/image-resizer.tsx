@@ -229,6 +229,7 @@ export default function ImageResizerTool() {
   const [lockAspectRatio, setLockAspectRatio] = useState(true)
   const [percentage, setPercentage] = useState('100')
   const [anchorId, setAnchorId] = useState('center')
+  const [selectedPresetIndex, setSelectedPresetIndex] = useState<string>('')
   const [previewFileId, setPreviewFileId] = useState<string>('')
 
   const [filenamePattern, setFilenamePattern] = useState('[name]-[width]x[height]')
@@ -679,6 +680,7 @@ export default function ImageResizerTool() {
   const applyPreset = (index: number) => {
     const preset = PRESETS[index]
     if (!preset) return
+    setSelectedPresetIndex(String(index))
     if (preset.mode === 'percentage') {
       setSizeMode('percentage')
       setPercentage(String(preset.percentage))
@@ -956,11 +958,10 @@ export default function ImageResizerTool() {
             <div className="flex flex-col gap-3">
               <Label className="text-muted-foreground text-xs font-semibold">Preset</Label>
               <select
-                defaultValue=""
+                value={selectedPresetIndex}
                 onChange={(e) => {
                   const idx = parseInt(e.target.value)
                   if (!isNaN(idx)) applyPreset(idx)
-                  e.target.value = ''
                 }}
                 className="bg-background border-border text-foreground focus:border-primary/50 w-full cursor-pointer rounded-md border px-3 py-2 text-xs outline-none"
               >
@@ -987,7 +988,10 @@ export default function ImageResizerTool() {
                 {(['pixels', 'percentage'] as SizeMode[]).map((mode) => (
                   <button
                     key={mode}
-                    onClick={() => setSizeMode(mode)}
+                    onClick={() => {
+                      setSizeMode(mode)
+                      setSelectedPresetIndex('')
+                    }}
                     className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
                       sizeMode === mode
                         ? 'border-primary bg-primary/10 text-primary'
@@ -1014,6 +1018,7 @@ export default function ImageResizerTool() {
                       onChange={(e) => {
                         setTargetWidth(e.target.value)
                         if (lockAspectRatio) setTargetHeight('')
+                        setSelectedPresetIndex('')
                       }}
                       className="bg-background border-border text-foreground focus:border-primary/50 w-full rounded-md border px-3 py-2 font-mono text-xs outline-none"
                     />
@@ -1031,6 +1036,7 @@ export default function ImageResizerTool() {
                       setLockAspectRatio(newLock)
                       if (newLock && targetWidth && targetHeight) {
                         setTargetHeight('')
+                        setSelectedPresetIndex('')
                       }
                     }}
                   >
@@ -1051,6 +1057,7 @@ export default function ImageResizerTool() {
                       onChange={(e) => {
                         setTargetHeight(e.target.value)
                         if (lockAspectRatio) setTargetWidth('')
+                        setSelectedPresetIndex('')
                       }}
                       className="bg-background border-border text-foreground focus:border-primary/50 w-full rounded-md border px-3 py-2 font-mono text-xs outline-none"
                     />
@@ -1068,7 +1075,10 @@ export default function ImageResizerTool() {
                   min={1}
                   max={1000}
                   value={Math.min(1000, Math.max(1, Number(percentage) || 100))}
-                  onChange={(e) => setPercentage(e.target.value)}
+                  onChange={(e) => {
+                    setPercentage(e.target.value)
+                    setSelectedPresetIndex('')
+                  }}
                   className="bg-secondary accent-primary h-2 w-full cursor-pointer appearance-none rounded-lg"
                 />
                 <input
@@ -1076,7 +1086,10 @@ export default function ImageResizerTool() {
                   min="1"
                   max="1000"
                   value={percentage}
-                  onChange={(e) => setPercentage(e.target.value)}
+                  onChange={(e) => {
+                    setPercentage(e.target.value)
+                    setSelectedPresetIndex('')
+                  }}
                   className="bg-background border-border text-foreground focus:border-primary/50 w-full rounded-md border px-3 py-2 font-mono text-xs outline-none"
                 />
               </div>
