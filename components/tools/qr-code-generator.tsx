@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
-import { Download, LayoutPanelLeft, Wifi, User, Image as ImageIcon } from 'lucide-react'
+import { Download, LayoutPanelLeft, Wifi, User, Image as ImageIcon, ImagePlus } from 'lucide-react'
 import { ToolLayout } from '@/components/tool-layout'
 import { tools } from '@/lib/tools'
 
@@ -46,7 +46,12 @@ export default function QrCodeGenerator() {
   const [errorCorrection, setErrorCorrection] = useState<'L' | 'M' | 'Q' | 'H'>('M')
   const [margin, setMargin] = useState(4)
 
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null)
+  const [logoImg, setLogoImg] = useState<HTMLImageElement | null>(null)
+  const [logoSizePercent, setLogoSizePercent] = useState(20)
+
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   const getContent = useCallback(() => {
     if (mode === 'url') return url || 'https://'
@@ -105,8 +110,22 @@ END:VCARD`
         },
         errorCorrectionLevel: errorCorrection,
       })
+
+      if (logoImg) {
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          const logoSize = canvas.width * (logoSizePercent / 100)
+          const padding = logoSize * 0.12
+          const x = (canvas.width - logoSize) / 2
+          const y = (canvas.height - logoSize) / 2
+          ctx.fillStyle = bgColor
+          ctx.fillRect(x - padding, y - padding, logoSize + padding * 2, logoSize + padding * 2)
+          ctx.drawImage(logoImg, x, y, logoSize, logoSize)
+        }
+      }
     } catch {}
-  }, [getContent, fgColor, bgColor, errorCorrection, margin])
+  }, [getContent, fgColor, bgColor, errorCorrection, margin, logoImg, logoSizePercent])
 
   useEffect(() => {
     void renderQR()
@@ -133,7 +152,42 @@ END:VCARD`
         },
         errorCorrectionLevel: errorCorrection,
       })
-      const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+
+      let finalSvg = svgString
+
+      if (logoDataUrl) {
+        const doc = new DOMParser().parseFromString(svgString, 'image/svg+xml')
+        const svgEl = doc.documentElement
+        const viewBox = svgEl.getAttribute('viewBox')
+        const size = viewBox
+          ? parseFloat(viewBox.split(' ')[2])
+          : parseFloat(svgEl.getAttribute('width') || '300')
+
+        const logoSize = size * (logoSizePercent / 100)
+        const padding = logoSize * 0.12
+        const x = (size - logoSize) / 2
+        const y = (size - logoSize) / 2
+
+        const rect = doc.createElementNS('http://www.w3.org/2000/svg', 'rect')
+        rect.setAttribute('x', String(x - padding))
+        rect.setAttribute('y', String(y - padding))
+        rect.setAttribute('width', String(logoSize + padding * 2))
+        rect.setAttribute('height', String(logoSize + padding * 2))
+        rect.setAttribute('fill', bgColor)
+        svgEl.appendChild(rect)
+
+        const image = doc.createElementNS('http://www.w3.org/2000/svg', 'image')
+        image.setAttribute('x', String(x))
+        image.setAttribute('y', String(y))
+        image.setAttribute('width', String(logoSize))
+        image.setAttribute('height', String(logoSize))
+        image.setAttribute('href', logoDataUrl)
+        svgEl.appendChild(image)
+
+        finalSvg = new XMLSerializer().serializeToString(doc)
+      }
+
+      const blob = new Blob([finalSvg], { type: 'image/svg+xml;charset=utf-8' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -141,6 +195,30 @@ END:VCARD`
       a.click()
       URL.revokeObjectURL(url)
     } catch {}
+  }
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      const img = new window.Image()
+      img.onload = () => {
+        setLogoImg(img)
+        setLogoDataUrl(dataUrl)
+        setErrorCorrection('H')
+      }
+      img.src = dataUrl
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeLogo = () => {
+    setLogoImg(null)
+    setLogoDataUrl(null)
+    if (logoInputRef.current) logoInputRef.current.value = ''
   }
 
   return (
@@ -399,6 +477,67 @@ END:VCARD`
                 max={10}
                 step={1}
               />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-muted-foreground text-[10px] font-medium tracking-widest uppercase">
+                  Center Logo
+                </Label>
+                {logoDataUrl && (
+                  <button
+                    type="button"
+                    onClick={removeLogo}
+                    className="text-muted-foreground hover:text-destructive text-[10px]"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
+              {logoDataUrl ? (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={logoDataUrl}
+                    alt="Logo preview"
+                    className="border-border h-10 w-10 rounded border bg-white object-contain p-1"
+                  />
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground text-[10px]">Size</span>
+                      <span className="text-primary font-mono text-xs">{logoSizePercent}%</span>
+                    </div>
+                    <Slider
+                      value={[logoSizePercent]}
+                      onValueChange={([v]) => setLogoSizePercent(v)}
+                      min={10}
+                      max={30}
+                      step={1}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="text-muted-foreground dark:hover:text-foreground h-8 w-full gap-1.5 text-xs hover:text-white"
+                >
+                  <ImagePlus className="h-3.5 w-3.5" /> Upload Logo
+                </Button>
+              )}
+              {logoDataUrl && errorCorrection !== 'H' && (
+                <p className="text-muted-foreground text-[10px]">
+                  High error correction is recommended when using a logo, to keep the QR code
+                  scannable.
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-2">
